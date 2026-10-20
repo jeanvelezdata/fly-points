@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>Search</h2>
+  <form id="searchform" hx-post="/jobs" hx-target="#job" hx-swap="innerHTML">
+    <div class="grid">
+      <label>Origins
+        <input name="origins" value="SJU" placeholder="SJU or SJU-area" required>
+      </label>
+      <label>Destinations
+        <input name="destinations" placeholder="MAD, CDG or EUR" required>
+      </label>
+      <label>From date <input type="date" name="date_from" required></label>
+      <label>To date <input type="date" name="date_to"></label>
+      <label>Cabin
+        <select name="cabin">
+          <option value="Y">Y economy</option><option value="W">W premium economy</option>
+          <option value="J" selected>J business</option><option value="F">F first</option>
+        </select>
+      </label>
+      <label>Max searches <input type="number" name="max_searches" value="8" min="1"></label>
+      <label>Programs (none = all)
+        <select name="programs" multiple size="4">
+          {% for p in programs %}<option value="{{ p.code }}">{{ p.code }} {{ p.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <div class="checks">
+        <label class="inline"><input type="checkbox" name="include_cash" checked> Include cash fares</label>
+        <label class="inline"><input type="checkbox" name="include_estimates" checked> Include estimates</label>
+        <label class="inline"><input type="checkbox" name="refresh"> Refresh (ignore cache)</label>
+      </div>
+    </div>
+    <p class="muted">Regions: {% for name, codes in regions.items() %}<span title="{{ codes }}"><b>{{ name }}</b> ({{ codes }})</span>{% if not loop.last %}; {% endif %}{% endfor %}</p>
+    <div class="actions">
+      <button type="submit">Search</button>
+      <input name="name" placeholder="Name to save this search" class="name">
+      <button type="button" class="secondary" hx-post="/saved" hx-include="#searchform" hx-target="#saved">Save</button>
+    </div>
+  </form>
+  <div id="form-errors"></div>
+</section>
+
+<section class="card"><h2>Saved searches</h2><div id="saved">{% include "_saved.html" %}</div></section>
+
+<div id="job"></div>
+{% endblock %}

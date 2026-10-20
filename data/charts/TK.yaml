@@ -1,0 +1,112 @@
+# Turkish Miles&Smiles award chart for Star Alliance partner-operated flights, one-way, zone-based.
+# Not the chart for Turkish Airlines metal. No premium economy; first often phone-only.
+program: TK
+source:
+  - https://awardfares.com/blog/miles-and-smiles-guide    # full matrix, "checked against Turkish's official tables 2026-07-14"
+  - https://meilenoptimieren.com/turkish-airlines-miles-and-smiles-awardchart/   # Europe 2 row (Aug 2026 chart) matches
+verified: 2026-10-19
+basis: zone
+# Rough author estimate, NOT sourced: carrier surcharges vary by operating airline (Lufthansa Group high).
+taxes_usd_typical: 150
+# Caveats:
+# - Cross-border within North America is 30k/40k/50k; same-country partner awards use `domestic`
+#   (15k/22.5k/30k after the 2025-12-03 increase; the region matrix itself did not change).
+# - Zone membership: US, CA, MX, GL per awardfares. meilenoptimieren says "South America" includes
+#   Central America and much of the Caribbean, and South Asia (IN, BD, NP, PK) is "Central Asia", LK/MV are
+#   "Far East"; neither source lists which Caribbean countries. Puerto Rico is ASSUMED to be North America
+#   (US territory) - unverified; if wrong, PR routes are priced under South America.
+# - Hawaii has a separate chart (25k/40k/50k), not modelled.
+zones:
+  TR: [TR]
+  EU1: [AL, AM, BA, BG, HR, GE, GR, HU, XK, MD, ME, MK, RO, RS, SI, UA]
+  EU2: [AT, AZ, BY, BE, CZ, DK, EE, FO, FI, FR, DE, IS, IE, IT, LV, LT, LU, MT, NL, NO, PL, PT, RU, SK, ES,
+        SE, CH, GB]
+  CAS: [KZ, UZ, TM, KG, TJ, IN, BD, NP, PK]
+  ME: [AE, SA, QA, BH, OM, KW, JO, LB, IQ, IR, SY]
+  NAF: [MA, DZ, TN, LY, EG]
+  CAF: [AO, CM, CF, TD, CD, GQ, GA, CG]
+  SAF: [ZA, NA, BW, ZW, MZ, ZM, MW, LS, SZ]
+  FE: [CN, JP, KR, TW, HK, MO, VN, TH, MY, SG, ID, PH, LK, MV]
+  NA: [US, CA, MX, GL, PR]
+  SA: [AR, BO, BR, CL, CO, EC, GY, PY, PE, SR, UY, VE, PA, CR, GT, SV, HN, NI, BZ, CU, DO, JM, BS, BB, TT, AW, CW, KY, HT]
+  OC: [AU, NZ, FJ]
+domestic: {Y: 15000, J: 22500, F: 30000}
+prices:
+  - {pair: [TR, TR], Y: 4500, J: 10000}
+  - {pair: [TR, EU1], Y: 10000, J: 20000, F: 30000}
+  - {pair: [TR, EU2], Y: 15000, J: 25000, F: 35000}
+  - {pair: [TR, CAS], Y: 20000, J: 35000, F: 50000}
+  - {pair: [TR, ME], Y: 18000, J: 28000, F: 40000}
+  - {pair: [TR, NAF], Y: 20000, J: 40000, F: 60000}
+  - {pair: [TR, CAF], Y: 25000, J: 60000, F: 90000}
+  - {pair: [TR, SAF], Y: 35000, J: 75000, F: 110000}
+  - {pair: [TR, FE], Y: 35000, J: 65000, F: 100000}
+  - {pair: [TR, NA], Y: 40000, J: 65000, F: 100000}
+  - {pair: [TR, SA], Y: 50000, J: 75000, F: 110000}
+  - {pair: [TR, OC], Y: 60000, J: 140000, F: 200000}
+  - {pair: [EU1, EU1], Y: 25000, J: 35000, F: 45000}
+  - {pair: [EU1, EU2], Y: 25000, J: 45000, F: 65000}
+  - {pair: [EU1, CAS], Y: 30000, J: 55000, F: 80000}
+  - {pair: [EU1, ME], Y: 28000, J: 48000, F: 70000}
+  - {pair: [EU1, NAF], Y: 30000, J: 60000, F: 90000}
+  - {pair: [EU1, CAF], Y: 35000, J: 80000, F: 120000}
+  - {pair: [EU1, SAF], Y: 45000, J: 95000, F: 140000}
+  - {pair: [EU1, FE], Y: 45000, J: 85000, F: 130000}
+  - {pair: [EU1, NA], Y: 50000, J: 85000, F: 130000}
+  - {pair: [EU1, SA], Y: 60000, J: 95000, F: 140000}
+  - {pair: [EU1, OC], Y: 70000, J: 160000, F: 230000}
+  - {pair: [EU2, EU2], Y: 25000, J: 35000, F: 45000}
+  - {pair: [EU2, CAS], Y: 35000, J: 60000, F: 90000}
+  - {pair: [EU2, ME], Y: 33000, J: 53000, F: 80000}
+  - {pair: [EU2, NAF], Y: 35000, J: 65000, F: 100000}
+  - {pair: [EU2, CAF], Y: 40000, J: 85000, F: 130000}
+  - {pair: [EU2, SAF], Y: 50000, J: 100000, F: 150000}
+  - {pair: [EU2, FE], Y: 50000, J: 90000, F: 135000}
+  - {pair: [EU2, NA], Y: 55000, J: 90000, F: 135000}
+  - {pair: [EU2, SA], Y: 65000, J: 100000, F: 150000}
+  - {pair: [EU2, OC], Y: 75000, J: 165000, F: 230000}
+  - {pair: [CAS, CAS], Y: 25000, J: 35000, F: 45000}
+  - {pair: [CAS, ME], Y: 38000, J: 63000, F: 95000}
+  - {pair: [CAS, NAF], Y: 40000, J: 75000, F: 110000}
+  - {pair: [CAS, CAF], Y: 45000, J: 95000, F: 140000}
+  - {pair: [CAS, SAF], Y: 55000, J: 110000, F: 165000}
+  - {pair: [CAS, FE], Y: 55000, J: 100000, F: 150000}
+  - {pair: [CAS, NA], Y: 60000, J: 100000, F: 150000}
+  - {pair: [CAS, SA], Y: 70000, J: 110000, F: 165000}
+  - {pair: [CAS, OC], Y: 80000, J: 175000, F: 250000}
+  - {pair: [ME, ME], Y: 25000, J: 35000, F: 45000}
+  - {pair: [ME, NAF], Y: 38000, J: 68000, F: 100000}
+  - {pair: [ME, CAF], Y: 43000, J: 88000, F: 130000}
+  - {pair: [ME, SAF], Y: 53000, J: 103000, F: 150000}
+  - {pair: [ME, FE], Y: 53000, J: 93000, F: 140000}
+  - {pair: [ME, NA], Y: 58000, J: 93000, F: 140000}
+  - {pair: [ME, SA], Y: 68000, J: 103000, F: 150000}
+  - {pair: [ME, OC], Y: 78000, J: 168000, F: 240000}
+  - {pair: [NAF, NAF], Y: 25000, J: 35000, F: 45000}
+  - {pair: [NAF, CAF], Y: 45000, J: 100000, F: 150000}
+  - {pair: [NAF, SAF], Y: 55000, J: 115000, F: 170000}
+  - {pair: [NAF, FE], Y: 55000, J: 105000, F: 160000}
+  - {pair: [NAF, NA], Y: 60000, J: 105000, F: 160000}
+  - {pair: [NAF, SA], Y: 70000, J: 115000, F: 170000}
+  - {pair: [NAF, OC], Y: 80000, J: 180000, F: 260000}
+  - {pair: [CAF, CAF], Y: 30000, J: 40000, F: 50000}
+  - {pair: [CAF, SAF], Y: 60000, J: 135000, F: 200000}
+  - {pair: [CAF, FE], Y: 60000, J: 125000, F: 190000}
+  - {pair: [CAF, NA], Y: 65000, J: 125000, F: 190000}
+  - {pair: [CAF, SA], Y: 75000, J: 135000, F: 200000}
+  - {pair: [CAF, OC], Y: 85000, J: 200000, F: 285000}
+  - {pair: [SAF, SAF], Y: 25000, J: 35000, F: 45000}
+  - {pair: [SAF, FE], Y: 70000, J: 140000, F: 210000}
+  - {pair: [SAF, NA], Y: 75000, J: 140000, F: 210000}
+  - {pair: [SAF, SA], Y: 85000, J: 150000, F: 225000}
+  - {pair: [SAF, OC], Y: 95000, J: 215000, F: 310000}
+  - {pair: [FE, FE], Y: 35000, J: 50000, F: 65000}
+  - {pair: [FE, NA], Y: 75000, J: 130000, F: 195000}
+  - {pair: [FE, SA], Y: 85000, J: 140000, F: 210000}
+  - {pair: [FE, OC], Y: 95000, J: 205000, F: 290000}
+  - {pair: [NA, NA], Y: 30000, J: 40000, F: 50000}
+  - {pair: [NA, SA], Y: 90000, J: 140000, F: 210000}
+  - {pair: [NA, OC], Y: 100000, J: 205000, F: 290000}
+  - {pair: [SA, SA], Y: 35000, J: 50000, F: 65000}
+  - {pair: [SA, OC], Y: 110000, J: 215000, F: 310000}
+  - {pair: [OC, OC], Y: 30000, J: 40000, F: 50000}

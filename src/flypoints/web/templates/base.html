@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fly-points</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script>
+    // Let HTMX swap friendly error fragments returned with 4xx statuses.
+    document.addEventListener("htmx:beforeSwap", function (e) {
+      if (e.detail.xhr.status === 422 || e.detail.xhr.status === 404) {
+        e.detail.shouldSwap = true;
+        e.detail.isError = false;
+      }
+    });
+  </script>
+</head>
+<body>
+  <header><h1><a href="/">fly-points</a></h1><span class="muted">Capital One miles and Chase Ultimate Rewards award search</span></header>
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

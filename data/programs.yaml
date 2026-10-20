@@ -1,0 +1,131 @@
+# Keys are PointsYeah 2-letter program codes.
+# ratio "a:b" = a bank points -> b partner miles (partner miles per bank point = b/a).
+# verified: date the row was checked against the issuer's transfer-partner page.
+banks:
+  chase:
+    min_transfer: 1000
+    increment: 1000
+    portal_cpp: 1.0   # Points Boost varies by card/booking; verify
+  capital_one:
+    min_transfer: 1000
+    increment: 100    # PointsYeah showed 51,310 miles -> 51,400 points
+    portal_cpp: 1.0
+
+programs:
+  EI:
+    name: Aer Lingus AerClub
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+  AC:
+    name: Air Canada Aeroplan
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  KL:
+    name: Air France-KLM Flying Blue
+    aliases: [AF]
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  BA:
+    name: British Airways Executive Club (Avios)
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  IB:
+    name: Iberia Plus (Avios)
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+  B6:
+    name: JetBlue TrueBlue
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+      capital_one: {ratio: "5:3", verified: 2026-10-19}
+  SQ:
+    name: Singapore KrisFlyer
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  WN:
+    name: Southwest Rapid Rewards
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+  UA:
+    name: United MileagePlus
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+  VS:
+    name: Virgin Atlantic Flying Club (Virgin Red points)
+    transfer_time: unknown   # not researched yet
+    banks:
+      chase: {ratio: "1:1", verified: 2026-10-19}
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  AM:
+    name: Aeromexico Rewards
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  AV:
+    name: Avianca LifeMiles
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  CX:
+    name: Cathay Asia Miles
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  EY:
+    name: Etihad Guest
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  AY:
+    name: Finnair Plus
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  QF:
+    name: Qantas Frequent Flyer
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  QR:
+    name: Qatar Airways Privilege Club
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  TP:
+    name: TAP Miles&Go
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  TK:
+    name: Turkish Miles&Smiles
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "1:1", verified: 2026-10-19}
+  EK:
+    name: Emirates Skywards
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "4:3", verified: 2026-10-19}
+  BR:
+    name: EVA Air Infinity MileageLands
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "4:3", verified: 2026-10-19}
+  JL:
+    name: Japan Airlines Mileage Bank
+    transfer_time: unknown   # not researched yet
+    banks:
+      capital_one: {ratio: "4:3", verified: 2026-10-19}

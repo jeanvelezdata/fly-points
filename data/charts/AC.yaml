@@ -1,0 +1,83 @@
+# Aeroplan partner (Star Alliance etc.) award chart, one-way saver, distance-based per zone pair.
+# Applies to partner-operated flights only; Air Canada metal is dynamically priced and NOT covered.
+# Prices reflect the June 1, 2026 change.
+program: AC
+source:
+  - https://awardtravelfinder.com/award-charts/aeroplan            # full table, read 2026-10-19
+  - https://princeoftravel.com/news/aeroplan-flight-reward-chart-june-2026/   # after-June-2026 figures for 5 zone pairs; matches
+verified: 2026-10-19
+basis: distance
+distance_unit: miles
+# Rough author estimate, NOT sourced: partner awards usually carry ~USD 50-150 in taxes, but
+# Lufthansa Group / some others pass through carrier surcharges that can add USD 200-600.
+taxes_usd_typical: 150
+# Caveats:
+# - Zone membership: sources say North America zone includes Central America, Atlantic = Europe, Africa,
+#   Middle East, India (OMAAT); Pacific = Asia, South Pacific. Aeroplan's zone map is an image; the Caribbean,
+#   Mexico and Panama placement below (North America) is NOT confirmed by any source read.
+# - Distance is Aeroplan's own mileage; we use great-circle statute miles, so routes within ~1% of a
+#   band edge (e.g. SJU-MAD ~3,950 vs the 4,000 edge) may be priced in the wrong band.
+# - Partner chart prices are fixed, but real award space is limited and carrier surcharges are extra.
+zones:
+  NA: [US, CA, MX, PR, GT, BZ, SV, HN, NI, CR, PA, CU, DO, JM, BS, BB, TT, AW, CW, KY, HT]
+  SA: [AR, BO, BR, CL, CO, EC, GY, PY, PE, SR, UY, VE]
+  ATL: [ES, PT, FR, NL, DE, CH, GB, IE, IT, GR, TR, AT, BE, DK, SE, NO, FI, IS, PL, CZ, HU, RO, BG, HR, RS,
+        MT, LU, EE, LV, LT, SK, SI, CY, AE, QA, SA, BH, OM, KW, JO, LB, IL, EG, MA, DZ, TN, ZA, KE, NG, GH,
+        ET, IN]
+  PAC: [JP, KR, TW, HK, CN, SG, TH, VN, MY, ID, PH, AU, NZ, FJ]
+prices:
+  - pair: [ATL, PAC]
+    bands:
+      - {up_to: 2500, Y: 25000, J: 47500, F: 55000}
+      - {up_to: 5000, Y: 40000, J: 75000, F: 95000}
+      - {up_to: 7000, Y: 60000, J: 92500, F: 120000}
+      - {Y: 75000, J: 130000, F: 150000}
+  - pair: [ATL, SA]
+    bands:
+      - {up_to: 7000, Y: 45000, J: 80000, F: 100000}
+      - {Y: 60000, J: 100000, F: 130000}
+  - pair: [NA, ATL]
+    bands:
+      - {up_to: 4000, Y: 32500, W: 50000, J: 60000, F: 90000}
+      - {up_to: 6000, Y: 42500, W: 60000, J: 75000, F: 120000}
+      - {up_to: 8000, Y: 60000, W: 70000, J: 90000, F: 150000}
+      - {Y: 75000, W: 85000, J: 110000, F: 165000}
+  - pair: [NA, PAC]
+    bands:
+      - {up_to: 5000, Y: 32500, W: 45000, J: 55000, F: 90000}
+      - {up_to: 7500, Y: 50000, W: 60000, J: 85000, F: 120000}
+      - {up_to: 11000, Y: 65000, W: 85000, J: 102500, F: 140000}
+      - {Y: 70000, W: 95000, J: 115000, F: 150000}
+  - pair: [NA, SA]
+    bands:
+      - {up_to: 2500, Y: 20000, W: 35000, J: 40000, F: 60000}
+      - {up_to: 4500, Y: 30000, W: 45000, J: 50000, F: 80000}
+      - {Y: 40000, W: 55000, J: 60000, F: 100000}
+  - pair: [PAC, SA]
+    bands:
+      - {up_to: 11000, Y: 60000, J: 90000, F: 130000}
+      - {Y: 80000, J: 140000, F: 200000}
+  - pair: [ATL, ATL]
+    bands:
+      - {up_to: 1000, Y: 7500, J: 12500, F: 25000}
+      - {up_to: 2000, Y: 15000, J: 22500, F: 40000}
+      - {up_to: 4000, Y: 30000, J: 40000, F: 75000}
+      - {up_to: 6000, Y: 42500, J: 70000, F: 100000}
+      - {Y: 50000, J: 95000, F: 130000}
+  - pair: [NA, NA]
+    bands:
+      - {up_to: 500, Y: 6000, W: 10000, J: 15000}
+      - {up_to: 1500, Y: 10000, W: 15000, J: 20000}
+      - {up_to: 2750, Y: 12500, W: 20000, J: 25000}
+      - {Y: 22500, W: 30000, J: 35000}
+  - pair: [PAC, PAC]
+    bands:
+      - {up_to: 1000, Y: 8000, J: 20000, F: 25000}
+      - {up_to: 2000, Y: 15000, J: 30000, F: 50000}
+      - {up_to: 5000, Y: 30000, J: 52500, F: 60000}
+      - {up_to: 7000, Y: 35000, J: 72500, F: 80000}
+      - {Y: 50000, J: 85000, F: 130000}
+  - pair: [SA, SA]
+    bands:
+      - {up_to: 1600, Y: 10000, J: 20000, F: 30000}
+      - {Y: 20000, J: 35000, F: 50000}

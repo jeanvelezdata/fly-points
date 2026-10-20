@@ -1,0 +1,57 @@
+# IATA -> name, country (ISO 3166-1 alpha-2), lat, lon (decimal degrees, 2 dp is plenty for award-chart distances).
+# Used by flypoints.providers.charts for great-circle distance and country->zone lookup.
+# Coordinates are from general knowledge of airport locations, not a single published dataset.
+SJU: {name: San Juan Luis Munoz Marin, country: PR, lat: 18.44, lon: -66.00}
+BQN: {name: Aguadilla Rafael Hernandez, country: PR, lat: 18.49, lon: -67.13}
+PSE: {name: Ponce Mercedita, country: PR, lat: 18.01, lon: -66.56}
+MIA: {name: Miami Intl, country: US, lat: 25.79, lon: -80.29}
+FLL: {name: Fort Lauderdale-Hollywood, country: US, lat: 26.07, lon: -80.15}
+MCO: {name: Orlando Intl, country: US, lat: 28.43, lon: -81.31}
+JFK: {name: New York JFK, country: US, lat: 40.64, lon: -73.78}
+EWR: {name: Newark Liberty, country: US, lat: 40.69, lon: -74.17}
+BOS: {name: Boston Logan, country: US, lat: 42.36, lon: -71.01}
+IAD: {name: Washington Dulles, country: US, lat: 38.95, lon: -77.46}
+ATL: {name: Atlanta Hartsfield-Jackson, country: US, lat: 33.64, lon: -84.43}
+CLT: {name: Charlotte Douglas, country: US, lat: 35.21, lon: -80.94}
+ORD: {name: Chicago O'Hare, country: US, lat: 41.98, lon: -87.90}
+DFW: {name: Dallas/Fort Worth, country: US, lat: 32.90, lon: -97.04}
+IAH: {name: Houston Bush Intercontinental, country: US, lat: 29.98, lon: -95.34}
+LAX: {name: Los Angeles Intl, country: US, lat: 33.94, lon: -118.41}
+SFO: {name: San Francisco Intl, country: US, lat: 37.62, lon: -122.38}
+YYZ: {name: Toronto Pearson, country: CA, lat: 43.68, lon: -79.63}
+YUL: {name: Montreal Trudeau, country: CA, lat: 45.47, lon: -73.74}
+PTY: {name: Panama City Tocumen, country: PA, lat: 9.07, lon: -79.38}
+BOG: {name: Bogota El Dorado, country: CO, lat: 4.70, lon: -74.15}
+MDE: {name: Medellin Jose Maria Cordova, country: CO, lat: 6.16, lon: -75.42}
+LIM: {name: Lima Jorge Chavez, country: PE, lat: -12.02, lon: -77.11}
+SCL: {name: Santiago Arturo Merino Benitez, country: CL, lat: -33.39, lon: -70.79}
+GRU: {name: Sao Paulo Guarulhos, country: BR, lat: -23.43, lon: -46.47}
+EZE: {name: Buenos Aires Ezeiza, country: AR, lat: -34.82, lon: -58.54}
+MEX: {name: Mexico City Benito Juarez, country: MX, lat: 19.44, lon: -99.07}
+CUN: {name: Cancun Intl, country: MX, lat: 21.04, lon: -86.87}
+MAD: {name: Madrid Barajas, country: ES, lat: 40.47, lon: -3.56}
+BCN: {name: Barcelona El Prat, country: ES, lat: 41.30, lon: 2.08}
+LIS: {name: Lisbon Humberto Delgado, country: PT, lat: 38.77, lon: -9.13}
+OPO: {name: Porto Francisco Sa Carneiro, country: PT, lat: 41.24, lon: -8.68}
+CDG: {name: Paris Charles de Gaulle, country: FR, lat: 49.01, lon: 2.55}
+ORY: {name: Paris Orly, country: FR, lat: 48.72, lon: 2.38}
+AMS: {name: Amsterdam Schiphol, country: NL, lat: 52.31, lon: 4.76}
+FRA: {name: Frankfurt, country: DE, lat: 50.03, lon: 8.57}
+MUC: {name: Munich, country: DE, lat: 48.35, lon: 11.79}
+ZRH: {name: Zurich, country: CH, lat: 47.46, lon: 8.55}
+LHR: {name: London Heathrow, country: GB, lat: 51.47, lon: -0.45}
+DUB: {name: Dublin, country: IE, lat: 53.43, lon: -6.27}
+FCO: {name: Rome Fiumicino, country: IT, lat: 41.80, lon: 12.25}
+ATH: {name: Athens Eleftherios Venizelos, country: GR, lat: 37.94, lon: 23.94}
+IST: {name: Istanbul Airport, country: TR, lat: 41.28, lon: 28.75}
+DOH: {name: Doha Hamad, country: QA, lat: 25.27, lon: 51.61}
+DXB: {name: Dubai Intl, country: AE, lat: 25.25, lon: 55.36}
+AUH: {name: Abu Dhabi Zayed, country: AE, lat: 24.43, lon: 54.65}
+SIN: {name: Singapore Changi, country: SG, lat: 1.36, lon: 103.99}
+HKG: {name: Hong Kong Intl, country: HK, lat: 22.31, lon: 113.91}
+HND: {name: Tokyo Haneda, country: JP, lat: 35.55, lon: 139.78}
+NRT: {name: Tokyo Narita, country: JP, lat: 35.77, lon: 140.39}
+KIX: {name: Osaka Kansai, country: JP, lat: 34.43, lon: 135.24}
+ICN: {name: Seoul Incheon, country: KR, lat: 37.46, lon: 126.44}
+TPE: {name: Taipei Taoyuan, country: TW, lat: 25.08, lon: 121.23}
+SYD: {name: Sydney Kingsford Smith, country: AU, lat: -33.94, lon: 151.18}

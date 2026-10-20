@@ -1,0 +1,6 @@
+# Region name -> IATA airport codes. Used by flypoints.config.expand_airports.
+EUR: [MAD, BCN, LIS, CDG, FCO, LHR, AMS, FRA, MUC, ZRH, DUB, ATH]
+JPN: [HND, NRT, KIX]
+SJU-area: [SJU, BQN, PSE]
+USA-hubs: [JFK, EWR, MIA, ATL, ORD, IAD, BOS, CLT, DFW, LAX]
+SAM: [BOG, MDE, LIM, SCL, GRU, EZE]

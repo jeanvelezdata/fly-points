@@ -1,0 +1,19 @@
+<section class="card" id="jobpanel" data-job-id="{{ job.id }}"
+  {% if status_snapshot in ("queued", "running") %}hx-get="/jobs/{{ job.id }}/progress" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
+  <h2>{{ job.title }}</h2>
+  {% if status_snapshot == "queued" %}
+    <p>Queued: waiting for the running search to finish.</p>
+  {% elif status_snapshot == "running" %}
+    <progress max="{{ job.total or 1 }}" value="{{ job.done }}"></progress>
+    <p class="muted">{{ job.done }}/{{ job.total }} searches ({{ job.elapsed }}s) {{ job.message }}</p>
+  {% elif status_snapshot == "error" %}
+    <div class="errors" role="alert"><b>Search failed.</b> {{ job.error }}</div>
+  {% else %}
+    {% set r = job.result %}
+    <p class="muted">{{ total_rows }} options | searches: {{ r.searches_run }} run, {{ r.searches_cached }} cached,
+      {{ r.searches_skipped }} skipped (cap {{ job.params.max_searches }}), {{ r.searches_planned }} planned | {{ job.elapsed }}s</p>
+    {% for e in r.errors %}<div class="errors">error: {{ e }}</div>{% endfor %}
+    {% for w in r.warnings %}<div class="warnings">warning: {{ w }}</div>{% endfor %}
+    {% include "_results.html" %}
+  {% endif %}
+</section>

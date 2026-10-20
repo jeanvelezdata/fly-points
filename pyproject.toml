@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "flypoints"
+version = "0.1.0"
+description = "Award-flight search for Capital One miles and Chase Ultimate Rewards"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2",
+    "pyyaml",
+    "httpx",
+    "cryptography",
+    "fast-flights==3.1.0",
+    "typer",
+    "rich",
+    "mcp",
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "python-multipart",
+    "beautifulsoup4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "respx"]
+
+[project.scripts]
+flypoints = "flypoints.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/flypoints"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["live: hits the network; deselected by default (run with -m live)"]
+addopts = "-m 'not live'"

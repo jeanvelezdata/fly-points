@@ -1,0 +1,69 @@
+{
+  "_note": "SYNTHETIC sample built from SerpApi's documented google_flights response shape; not a real response.",
+  "best_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {"name": "Luis Munoz Marin International Airport", "id": "SJU", "time": "2026-12-02 21:30"},
+          "arrival_airport": {"name": "Adolfo Suarez Madrid-Barajas Airport", "id": "MAD", "time": "2026-12-03 10:05"},
+          "duration": 515,
+          "airplane": "Airbus A330",
+          "airline": "Iberia",
+          "travel_class": "Economy",
+          "flight_number": "IB 6124"
+        }
+      ],
+      "total_duration": 515,
+      "price": 302,
+      "type": "One way",
+      "booking_token": "synthetic"
+    }
+  ],
+  "other_flights": [
+    {
+      "flights": [
+        {
+          "departure_airport": {"name": "Luis Munoz Marin International Airport", "id": "SJU", "time": "2026-12-02 08:00"},
+          "arrival_airport": {"name": "El Dorado International Airport", "id": "BOG", "time": "2026-12-02 10:30"},
+          "duration": 210,
+          "airline": "Avianca",
+          "travel_class": "Economy",
+          "flight_number": "AV 245"
+        },
+        {
+          "departure_airport": {"name": "El Dorado International Airport", "id": "BOG", "time": "2026-12-02 13:00"},
+          "arrival_airport": {"name": "Adolfo Suarez Madrid-Barajas Airport", "id": "MAD", "time": "2026-12-03 05:40"},
+          "duration": 640,
+          "airline": "Avianca",
+          "travel_class": "Economy",
+          "flight_number": "AV 12"
+        }
+      ],
+      "layovers": [{"duration": 150, "name": "El Dorado International Airport", "id": "BOG"}],
+      "total_duration": 1000,
+      "price": 250,
+      "type": "One way"
+    },
+    {
+      "flights": [
+        {
+          "departure_airport": {"name": "Luis Munoz Marin International Airport", "id": "SJU", "time": "2026-12-02 12:00"},
+          "arrival_airport": {"name": "Miami International Airport", "id": "MIA", "time": "2026-12-02 14:20"},
+          "duration": 140,
+          "airline": "American",
+          "flight_number": "AA 2210"
+        },
+        {
+          "departure_airport": {"name": "Miami International Airport", "id": "MIA", "time": "2026-12-02 18:00"},
+          "arrival_airport": {"name": "Adolfo Suarez Madrid-Barajas Airport", "id": "MAD", "time": "2026-12-03 08:00"},
+          "duration": 540,
+          "airline": "American",
+          "flight_number": "AA 68"
+        }
+      ],
+      "total_duration": 780,
+      "price": 410,
+      "type": "One way"
+    }
+  ]
+}

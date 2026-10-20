@@ -1,0 +1,16 @@
+# Active transfer bonuses. bonus is a fraction (0.3 = 30%). Dates are inclusive.
+# Example:
+# - bank: capital_one
+#   program: AC
+#   bonus: 0.3
+#   start: 2026-10-01
+#   end: 2026-10-31
+#   source: https://awardtravelfinder.com/transfer-bonuses
+#   verified: 2026-10-19
+- bank: capital_one
+  program: BA
+  bonus: 0.2
+  start: 2026-10-01
+  end: 2026-10-31
+  source: https://awardtravelfinder.com/transfer-bonuses
+  verified: 2026-10-19

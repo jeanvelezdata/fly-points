@@ -1,0 +1,58 @@
+<div id="results">
+  <form id="rf" class="filters" hx-get="/jobs/{{ job.id }}/results" hx-target="#results" hx-swap="outerHTML" hx-trigger="change, submit">
+    <input type="hidden" name="sort" value="{{ q.sort or '' }}">
+    <input type="hidden" name="dir" value="{{ q.dir or '' }}">
+    <label>Program
+      <select name="program"><option value="">any</option>
+        {% for p in result_programs %}<option value="{{ p }}" {{ "selected" if q.program == p }}>{{ p }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Stops
+      <select name="max_stops">
+        {% for v, label in [("", "any"), ("0", "nonstop only"), ("1", "1 stop or fewer"), ("2", "2 stops or fewer")] %}
+          <option value="{{ v }}" {{ "selected" if (q.max_stops or "") == v }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Max bank pts <input type="number" name="max_points" value="{{ q.max_points or '' }}" min="0"></label>
+    <label>Max taxes $ <input type="number" name="max_taxes" value="{{ q.max_taxes or '' }}" min="0"></label>
+    <label>Min seats <input type="number" name="min_seats" value="{{ q.min_seats or '' }}" min="0"></label>
+    <label class="inline"><input type="checkbox" name="hide_est" {{ "checked" if q.hide_est }}> Hide estimated</label>
+    <span class="muted">{{ rows|length }} of {{ total_rows }} shown</span>
+  </form>
+  {% if rows %}
+  <div class="tablewrap"><table>
+    <thead><tr>
+      {% for key, label in columns %}
+        {% if key %}
+          {% set nd = "desc" if (q.sort == key and q.dir != "desc") else "asc" %}
+          <th class="{{ 'num' if key in numeric }}">
+            <a href="#" hx-get="/jobs/{{ job.id }}/results" hx-include="#rf" hx-target="#results" hx-swap="outerHTML"
+               hx-vals='{{ {"sort": key, "dir": nd} | tojson }}'>{{ label }}{% if q.sort == key %} {{ "&#9660;"|safe if q.dir == "desc" else "&#9650;"|safe }}{% endif %}</a>
+          </th>
+        {% else %}<th>{{ label }}</th>{% endif %}
+      {% endfor %}
+    </tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td>{{ r.date }}</td><td>{{ r.route }}</td>
+        <td class="num">{{ "?" if r.stops is none else ("nonstop" if r.stops == 0 else r.stops) }}</td>
+        <td>{{ r.program }}</td><td>{{ r.cabin }}</td>
+        <td class="num">{{ "{:,}".format(r.miles) }}</td>
+        <td class="num">${{ "{:,.0f}".format(r.taxes) }}</td>
+        <td class="num">{{ "{:,}".format(r.points) if r.points else "-" }}</td>
+        <td>{{ r.bank or "-" }}</td>
+        <td>{{ r.other }}</td>
+        <td class="num">{{ "${:,.0f}".format(r.cash) if r.cash is not none else "-" }}</td>
+        <td class="num">{{ "%.1f"|format(r.cpp) if r.cpp is not none else "-" }}</td>
+        <td class="num">{{ "?" if r.seats is none else r.seats }}</td>
+        <td>{% if r.estimated %}<span class="est">EST</span>{% endif %}</td>
+        <td class="note">{{ r.note }}</td>
+        <td>{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">book</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p>No matching offers.</p>{% endif %}
+</div>
