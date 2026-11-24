@@ -33,8 +33,8 @@ def test_to_cash_fare_conversion():
 def _patch_ff(monkeypatch, results=None, exc=None):
     seen = {}
 
-    def fake_get_flights(q):
-        seen["q"] = q
+    def fake_get_flights(q, integration=None):
+        seen["q"], seen["integration"] = q, integration
         if exc:
             raise exc
         return results
@@ -53,6 +53,27 @@ def test_fastflights_cabin_mapping_and_sorting(monkeypatch, cabin, seat):
     assert [f.price_usd for f in fares] == [300.0, 900.0]
     assert cash_fastflights._SEAT[cabin] == seat
     assert seen["q"].get_seat_type() == seat
+
+
+def test_fastflights_sends_reject_all_consent_cookie(monkeypatch):
+    seen = _patch_ff(monkeypatch, [])
+    FastFlightsProvider().fares("SJU", "MAD", DAY, Cabin.J)
+    assert isinstance(seen["integration"], cash_fastflights._ConsentFetch)
+
+    calls = {}
+
+    class FakeClient:
+        def __init__(self, **kw):
+            calls["client"] = kw
+
+        def get(self, url, params=None, cookies=None):
+            calls.update(url=url, params=params, cookies=cookies)
+            return SimpleNamespace(text="<html/>")
+
+    monkeypatch.setattr(cash_fastflights, "Client", FakeClient)
+    assert cash_fastflights._ConsentFetch().fetch_html("raw-q") == "<html/>"
+    assert calls["cookies"] == {"SOCS": "CAI"} and calls["params"] == {"q": "raw-q"}
+    assert calls["url"] == "https://www.google.com/travel/flights"
 
 
 def test_fastflights_not_found_returns_empty(monkeypatch):
