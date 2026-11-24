@@ -1,8 +1,17 @@
 # fly-points: deployment architecture (friends edition)
 
-Drafted 2026-11-24. Status: **plan, not yet implemented.** Covers how to host the web app for a
-handful of friends, the code changes required first, and the Iberia coverage finding that came up
-while checking the 2027-01-28..02-02 SJU→MAD search.
+Drafted 2026-11-24. Status: **deployed 2026-11-24** at `https://<VM IP with dashes>.sslip.io/`
+(user `friends`; the password is in `/root/flypoints-shared-password` on the VM, root-only). It
+covers how the web app is hosted for a handful of friends, the code changes made first, and the
+Iberia coverage finding that came up while checking the 2027-01-28..02-02 SJU→MAD search.
+
+Deviations from the runbook below, as built:
+
+- uv comes from PyPI into `/opt/uv` (`/opt/uv/bin/uv`), not from the install script.
+- The Caddyfile has no file `log` block: Caddy failed to start with one. Errors go to journald.
+- **Cash fares fail on the VM.** It is in Finland, Google serves its EU consent page, and
+  fast-flights can't parse it. Each search shows `fast-flights failed … 'NoneType' object has no
+  attribute 'text'`. Award search works. Unresolved: see §8.
 
 ## 1. Decisions
 
@@ -264,6 +273,10 @@ Run as root over the existing access (`ssh -i ~/.ssh/ig_agent_vm root@<VM_IP>`; 
 - **One shared password.** No way to revoke one friend. Rotating it means telling everyone.
 - **Coverage.** Half the reachable programs, including Iberia, have no live source (§2). Friends
   should see that in the UI (M6), not discover it.
+- **Cash fares from an EU IP.** fast-flights fails behind Google's consent page. There are three
+  options: a SerpApi key (`SERPAPI_API_KEY` in the env file; 250 free searches/month), turning
+  cash off by default on the server, or sending a consent cookie from fast-flights. The last one
+  means accepting Google's consent on Jean's behalf, so it's Jean's call.
 - **Resource fit.** The VM had about 3 GB available and 28 GB of free disk on 2026-11-24.
   fly-points' footprint on it hasn't been measured; check `systemctl status flypoints` memory after
   a sweep.
