@@ -23,6 +23,7 @@ class Program(BaseModel):
     transfer_time: str
     aliases: list[str] = []
     banks: dict[Bank, BankRatio]
+    live: bool = True  # False: no live award source searches this program
 
 
 class BankRules(BaseModel):
@@ -67,6 +68,7 @@ def load_programs() -> dict[str, Program]:
             transfer_time=p["transfer_time"],
             aliases=p.get("aliases", []),
             banks=banks,
+            live=p.get("live", True),
         )
     return out
 

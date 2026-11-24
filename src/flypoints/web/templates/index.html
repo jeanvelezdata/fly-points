@@ -18,12 +18,13 @@
           <label class="inline"><input type="checkbox" name="cabins" value="{{ c.value }}" {{ "checked" if c.value == "J" }}> {{ c.value }} {{ c.to_provider() }}</label>
         {% endfor %}
       </fieldset>
-      <label>Max searches <input type="number" name="max_searches" value="8" min="1"></label>
+      <label>Max searches <input type="number" name="max_searches" value="{{ [8, limits.max_searches or 8]|min }}" min="1"{% if limits.max_searches %} max="{{ limits.max_searches }}"{% endif %}></label>
       <label>Programs (none = all)
         <select name="programs" multiple size="4">
-          {% for p in programs %}<option value="{{ p.code }}">{{ p.code }} {{ p.name }}</option>{% endfor %}
+          {% for p in programs %}<option value="{{ p.code }}">{{ p.code }} {{ p.name }}{% if not p.live %} (estimates only){% endif %}</option>{% endfor %}
         </select>
       </label>
+      {% if not_live %}<p class="muted coverage">Not searched live (no data source): {{ not_live|join(", ") }}. Their flights can still show up when another program sells them, e.g. Iberia flights through Avianca LifeMiles.</p>{% endif %}
       <div class="checks">
         <label class="inline"><input type="checkbox" name="include_cash" checked> Include cash fares</label>
         <label class="inline"><input type="checkbox" name="include_estimates" checked> Include estimates</label>
@@ -35,7 +36,7 @@
       <div class="grid">
         <label class="inline"><input type="checkbox" name="direct_only"> Nonstop only</label>
         <label>Max stops <input type="number" name="max_stops" min="0"></label>
-        <label>Carriers (operating, e.g. AC, UA) <input name="carriers" placeholder="any"></label>
+        <label title="Every flight must be on one of these airlines: IB keeps an Iberia nonstop but drops an Avianca connection to an Iberia flight.">Carriers (operating, all flights, e.g. AC, UA) <input name="carriers" placeholder="any"></label>
         <label>Max taxes $ <input type="number" name="max_taxes_usd" min="0"></label>
         <label>Max bank points <input type="number" name="max_points" min="0"></label>
         <label>Min seats <input type="number" name="min_seats" min="0"></label>
@@ -84,7 +85,7 @@
           <label class="inline"><input type="checkbox" name="cabins" value="{{ c.value }}" {{ "checked" if c.value == "J" }}> {{ c.value }} {{ c.to_provider() }}</label>
         {% endfor %}
       </fieldset>
-      <label>Max searches <input type="number" name="max_searches" value="40" min="1"></label>
+      <label>Max searches <input type="number" name="max_searches" value="{{ [40, limits.max_sweep_searches or 40]|min }}" min="1"{% if limits.max_sweep_searches %} max="{{ limits.max_sweep_searches }}"{% endif %}></label>
       <label>Fresh hours <input type="number" name="fresh_hours" value="24" min="0" step="any"></label>
     </div>
     <div class="actions"><button type="submit">Start sweep</button></div>

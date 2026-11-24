@@ -105,6 +105,8 @@ th a { text-decoration: none; color: inherit; }
 th.num { text-align: right; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 td.note { white-space: normal; min-width: 160px; color: var(--ink-muted); }
+td.flights { font-size: .85rem; }
+.coverage { grid-column: 1 / -1; margin: 0; font-size: .85rem; }
 tbody tr:nth-child(4n+1) { background: var(--row-alt); }
 tbody tr:not(.bookrow):hover { background: var(--row-hl); }
 .est, .mix { padding: 0 .35rem; font-size: 13px; background: var(--warn-bg); color: var(--warn-ink); box-shadow: inset 0 0 0 2px var(--warn-ink); text-shadow: none; }

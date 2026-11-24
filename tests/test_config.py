@@ -23,6 +23,12 @@ def partners(bank):
     return {c for c, p in load_programs().items() if bank in p.banks}
 
 
+def test_programs_without_live_source():
+    # PointsYeah doesn't search these (checked 2026-11-24); the web form lists them as estimates only.
+    assert {c for c, p in load_programs().items() if not p.live} == {
+        "EI", "BA", "IB", "SQ", "CX", "EY", "AY", "QR", "TP", "BR", "JL"}
+
+
 def test_partner_sets():
     assert partners(Bank.chase) == CHASE
     assert partners(Bank.capital_one) == C1_ALL

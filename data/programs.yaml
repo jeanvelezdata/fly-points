@@ -1,6 +1,8 @@
 # Keys are PointsYeah 2-letter program codes.
 # ratio "a:b" = a bank points -> b partner miles (partner miles per bank point = b/a).
 # verified: date the row was checked against the issuer's transfer-partner page.
+# live: false = no live award source covers the program (PointsYeah doesn't search it, checked
+# 2026-11-24); results for it can only be chart estimates. Default true.
 banks:
   chase:
     min_transfer: 1000
@@ -14,6 +16,7 @@ banks:
 programs:
   EI:
     name: Aer Lingus AerClub
+    live: false
     transfer_time: "Chase: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
@@ -32,12 +35,14 @@ programs:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   BA:
     name: British Airways Executive Club (Avios)
+    live: false
     transfer_time: "Chase: instant; Capital One: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   IB:
     name: Iberia Plus (Avios)
+    live: false
     transfer_time: "Chase: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
@@ -49,6 +54,7 @@ programs:
       capital_one: {ratio: "5:3", verified: 2026-10-19}
   SQ:
     name: Singapore KrisFlyer
+    live: false
     transfer_time: "Chase: 1-7 days; Capital One: 24-48 hours"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
@@ -81,16 +87,19 @@ programs:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   CX:
     name: Cathay Asia Miles
+    live: false
     transfer_time: "Capital One: 24 hours to 5 days"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   EY:
     name: Etihad Guest
+    live: false
     transfer_time: "Capital One: instant to 24 hours"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   AY:
     name: Finnair Plus
+    live: false
     transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
@@ -101,11 +110,13 @@ programs:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   QR:
     name: Qatar Airways Privilege Club
+    live: false
     transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   TP:
     name: TAP Miles&Go
+    live: false
     transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
@@ -121,11 +132,13 @@ programs:
       capital_one: {ratio: "4:3", verified: 2026-10-19}
   BR:
     name: EVA Air Infinity MileageLands
+    live: false
     transfer_time: "Capital One: 24-48 hours"
     banks:
       capital_one: {ratio: "4:3", verified: 2026-10-19}
   JL:
     name: Japan Airlines Mileage Bank
+    live: false
     transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "4:3", verified: 2026-10-19}
