@@ -1,0 +1,31 @@
+# fly-points web app on the shared Hetzner VM (architecture.md §3-§6).
+# Install: cp /srv/flypoints/ops/flypoints.service /etc/systemd/system/ && systemctl daemon-reload
+#          && systemctl enable --now flypoints
+# Secrets and limits live in /etc/flypoints/env (0640 root:flypoints), never in this file.
+[Unit]
+Description=fly-points award search (web)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=flypoints
+Group=flypoints
+Environment=HOME=/var/lib/flypoints
+EnvironmentFile=/etc/flypoints/env
+WorkingDirectory=/srv/flypoints
+# Loopback only: Caddy is the sole way in. One process: jobs live in memory.
+ExecStart=/srv/flypoints/.venv/bin/flypoints web --host 127.0.0.1 --port 8765
+Restart=on-failure
+RestartSec=5
+
+# Isolation from ig-agent on the same box
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/flypoints
+MemoryMax=1G
+CPUWeight=50
+
+[Install]
+WantedBy=multi-user.target
