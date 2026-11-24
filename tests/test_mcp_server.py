@@ -6,7 +6,7 @@ import pytest
 from mcp import Client
 
 from flypoints import engine, mcp_server
-from flypoints.models import Cabin, CashFare
+from flypoints.models import Bank, Cabin, CashFare
 from flypoints.providers.base import AuthError
 from tests.test_cli import result  # canned SearchResult: one live AC offer + one estimated KL offer
 
@@ -31,13 +31,79 @@ def test_search_awards_flattens_options(fake_engine):
         mcp_server.search_awards("SJU", "MAD", "2026-12-01", "2026-12-04", programs="ac", limit=1)
     )
     assert fake_engine["query"].programs == ["AC"]
-    assert fake_engine["query"].cabin is Cabin.J and fake_engine["query"].max_searches == 4
+    assert fake_engine["query"].cabins == [Cabin.J] and fake_engine["query"].max_searches == 4
     assert out["searches_run"] == 1 and out["errors"] == ["e1"] and out["warnings"] == ["w1"]
     assert out["total_options"] == 2 and len(out["options"]) == 1
     row = out["options"][0]
     assert row["route"] == "SJU-YYZ-MAD" and row["program_code"] == "AC" and row["miles"] == 60000
     assert row["best_bank"] and row["best_bank_points"] and not row["estimated"]
+    assert row["mixed_cabin_pct"] is None and row["seen"].endswith("ago")
+    assert out["options"] and json.dumps(out)
+
+
+def test_search_awards_cabins_and_filters(fake_engine):
+    out = asyncio.run(mcp_server.search_awards(
+        "SJU", "MAD", "2026-12-01", "2026-12-04", cabins=["Y", "J"], direct_only=True, max_stops=1,
+        carriers=["ac,ua"], days=["mon", "Fri"], max_taxes_usd=100, max_points=80000, min_seats=2,
+        banks=["capital_one"], min_cabin_pct=75,
+    ))
+    q = fake_engine["query"]
+    assert "error" not in out
+    assert q.cabins == [Cabin.Y, Cabin.J] and q.direct_only and q.max_stops == 1 and q.carriers == ["AC", "UA"]
+    assert q.days_of_week == [0, 4] and q.max_taxes_usd == 100 and q.max_points == 80000 and q.min_seats == 2
+    assert q.banks == [Bank.capital_one] and q.min_cabin_pct == 75
+    for bad in ({"days": ["funday"]}, {"banks": ["amex"]}):
+        assert "error" in asyncio.run(mcp_server.search_awards("SJU", "MAD", "2026-12-01", "2026-12-04", **bad))
+
+
+def test_search_awards_stored_never_runs_live(monkeypatch):
+    calls = {}
+
+    def stored(query, **kw):
+        calls.update(query=query, kw=kw)
+        return result()
+
+    monkeypatch.setattr(engine, "search_stored", stored)
+    monkeypatch.setattr(engine, "search", lambda *a, **kw: pytest.fail("live search must not run"))
+    out = asyncio.run(mcp_server.search_awards("SJU", "MAD", "2026-12-01", "2026-12-04", stored=True, max_age_hours=6))
+    assert calls["kw"]["max_age_hours"] == 6 and out["total_options"] == 2
+
+
+def test_booking_plan(fake_engine):
+    out = asyncio.run(mcp_server.booking_plan("SJU", "MAD", "2026-12-01", "2026-12-04", index=1))
+    assert out["option"]["program_code"] == "AC" and out["plan"]["program_code"] == "AC"
+    kinds = [s["kind"] for s in out["plan"]["steps"]]
+    assert kinds[0] == "verify" and "transfer" in kinds and "book" in kinds and "warning" in kinds
+    assert out["plan"]["alternatives"] and isinstance(out["plan"]["unknowns"], list)
     json.dumps(out)
+    est = asyncio.run(mcp_server.booking_plan("SJU", "MAD", "2026-12-01", "2026-12-04", index=2))
+    assert est["option"]["estimated"] and est["plan"]["steps"][0]["kind"] == "warning"
+    for index in (0, 3):
+        assert "out of range" in asyncio.run(
+            mcp_server.booking_plan("SJU", "MAD", "2026-12-01", "2026-12-04", index=index)
+        )["error"]
+    assert "error" in asyncio.run(mcp_server.booking_plan("SJU", "MAD", "bad", "2026-12-04"))
+
+
+def test_sweep_tool(monkeypatch):
+    calls = {}
+
+    def fake_sweep(origins, dests, d_from, d_to, cabins, max_searches, fresh_hours, progress=None, stop_event=None):
+        calls.update(args=(origins, dests, d_from, d_to, cabins, max_searches, fresh_hours))
+        return engine.SweepStats(planned=3, run=2, skipped_fresh=1)
+
+    monkeypatch.setattr(engine, "sweep", fake_sweep)
+    out = asyncio.run(mcp_server.sweep("SJU", "EUR", "2027-01-01", "2027-06-30", cabins=["Y", "J"]))
+    assert calls["args"] == (["SJU"], ["EUR"], date(2027, 1, 1), date(2027, 6, 30), [Cabin.Y, Cabin.J], 8, 24)
+    assert out["planned"] == 3 and out["run"] == 2 and out["stopped"] is False
+
+    def boom(*a, **kw):
+        raise AuthError("token expired")
+
+    monkeypatch.setattr(engine, "sweep", boom)
+    assert asyncio.run(mcp_server.sweep("SJU", "EUR", "2027-01-01", "2027-06-30")) == {"error": "token expired"}
+    assert "error" in asyncio.run(mcp_server.sweep("SJU", "EUR", "bad", "2027-06-30"))
+    assert "error" in asyncio.run(mcp_server.sweep("SJU", "EUR", "2027-01-01", "2027-06-30", cabins=["Z"]))
 
 
 def test_search_awards_errors_are_returned(monkeypatch):
@@ -49,7 +115,7 @@ def test_search_awards_errors_are_returned(monkeypatch):
     assert out == {"error": "token expired, re-copy the cookie"}
     bad = asyncio.run(mcp_server.search_awards("SJU", "MAD", "12/01/2026", "2026-12-04"))
     assert "error" in bad
-    bad = asyncio.run(mcp_server.search_awards("SJU", "MAD", "2026-12-01", "2026-12-04", cabin="Z"))
+    bad = asyncio.run(mcp_server.search_awards("SJU", "MAD", "2026-12-01", "2026-12-04", cabins=["Z"]))
     assert "error" in bad
 
 
@@ -94,6 +160,7 @@ def test_in_process_client(fake_engine):
             return names, progs, search
 
     names, progs, search = asyncio.run(run())
-    assert names == {"search_awards", "list_programs", "transfer_bonuses", "compare_cash", "list_regions"}
+    assert names == {"search_awards", "booking_plan", "sweep", "list_programs", "transfer_bonuses", "compare_cash",
+                     "list_regions"}
     assert any(p["code"] == "AC" for p in json.loads(progs.content[0].text)["programs"])
     assert json.loads(search.content[0].text)["options"][0]["program_code"] == "AC"

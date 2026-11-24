@@ -1,0 +1,30 @@
+/* Stardew Valley: stepped daytime sky, grass strip, parchment panels in three-ring wood frames, brown ink. */
+:root {
+  --bg: linear-gradient(#4c9fe0 0 30%, #62b2ea 30% 55%, #7cc4f0 55% 78%, #9ad4f4 78%);
+  --ink: #5b2b0a; --ink-muted: #8c5a30;
+  --head-muted: #12345a;
+  --logo: #fff1c8; --logo-shadow: #b35f1f; --logo-shadow-2: #5b2b0a;
+  --title: #8a3a0e; --title-shadow: #f0b860;
+  --panel: #ffd796; --frame-outer: #5b2b0a; --frame-inner: #dc7b2c; --drop: rgba(30, 50, 90, .35);
+  --frame: 0 calc(-1 * var(--px)) 0 0 var(--frame-outer), 0 var(--px) 0 0 var(--frame-outer),
+           calc(-1 * var(--px)) 0 0 0 var(--frame-outer), var(--px) 0 0 0 var(--frame-outer),
+           inset 0 0 0 var(--px) var(--frame-inner), inset 0 0 0 calc(2 * var(--px)) #b35f1f,
+           inset 0 0 0 calc(2 * var(--px) + 2px) #5b2b0a, calc(2 * var(--px)) calc(2 * var(--px)) 0 0 var(--drop);
+  --field-bg: #fff1c8; --field-ink: #5b2b0a; --bevel-hi: #ffffff; --bevel-lo: #d09a50;
+  --btn-bg: #dc7b2c; --btn-ink: #fff1c8; --btn-hi: #f5a356; --btn-lo: #a8501c; --btn-edge: #5b2b0a; --btn-ink-shadow: 1px 1px 0 #5b2b0a;
+  --btn2-bg: #f5c070; --btn2-ink: #5b2b0a;
+  --accent: #2d7a2a; --focus: #2d7a2a; --cursor: #a8501c; --check-on: #2d7a2a;
+  --th-bg: #b35f1f; --th-ink: #fff1c8; --row-alt: #ffe2ae; --row-hl: #fff1c8; --rule: #e0a860;
+  --bar-track: #6a3a14; --bar-fill: #6ec43c; --bar-fill-2: #3f8f22; --plane-color: #a8501c;
+  --err-bg: #ffd0b8; --err-ink: #a01c10; --warn-bg: #ffe486; --warn-ink: #8a5a00;
+}
+.card { padding: calc(1rem + 3 * var(--px)); }
+button.secondary { --btn-hi: #ffd890; --btn-lo: #c8883c; --btn-ink-shadow: none; }
+button.danger { color: #a01c10; }
+/* Grass: a pixel tuft edge over two stepped greens, fixed at the bottom. */
+body::after {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 48px; z-index: -1; pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8' shape-rendering='crispEdges'%3E%3Cpath fill='%2384cc3c' d='M2 2h2v6H2zM4 4h2v4H4zM12 0h2v8h-2zM14 3h2v5h-2zM10 4h2v4h-2zM20 3h2v5h-2z'/%3E%3C/svg%3E") repeat-x 0 0,
+    linear-gradient(transparent 0 8px, #84cc3c 8px 20px, #5aa82c 20px);
+}

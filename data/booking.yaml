@@ -1,0 +1,483 @@
+# How-to-book data per program. Keys are the same codes as programs.yaml. Loaded by flypoints.booking.
+# Rule: "unknown" / null means NOT verified from a source. Never fill a field from memory.
+#
+# Per-program fields:
+#   alliance:          star | oneworld | skyteam | none  (the program's airline's alliance; used for "alternatives")
+#   award_search_url:  the program's award search / booking page. Where only the airline's site root is given,
+#                      no deeper official page was confirmed.
+#   deep_link:         URL template with {origin} {destination} {date} {cabin} ({cabin} = Y/W/J/F), or null.
+#                      Only set when a documented/evidenced URL format was found; none were as of 2026-10-20.
+#   deep_link_verified: true only if the format was confirmed from a reliable source.
+#   partner_booking:   online | phone | mixed | unknown  (can partner-airline awards be booked online?)
+#   phone:             US-reachable award/reservations number from the airline's own site, else null.
+#   holds:             award hold policy in a short sentence, or "unknown".
+#   transfer_time:     per bank (chase, capital_one): "instant", "up to N hours", "N-M days", or "unknown".
+#                      Issuer pages do not publish times; values come from points blogs and reader reports
+#                      (typical, not guaranteed).
+#   gotchas:           1-3 short, source-backed, actionable lines.
+#   sources:           URLs used. verified: date checked.
+#
+# carriers: operating-carrier IATA code -> alliance (star | oneworld | skyteam | none).
+# Membership changes: Asiana (OZ) leaves Star Alliance 2026-12-16 (absorbed by Korean Air); TAP (TP) alliance may
+# change depending on its privatisation outcome (Lufthansa keeps it in Star; Air France-KLM may move it to SkyTeam).
+# Review this map whenever alliances change.
+
+programs:
+  EI:
+    alliance: none
+    award_search_url: https://www.aerlingus.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {chase: instant}
+    gotchas:
+      - "Avios partner flights (BA, Iberia, Vueling) are booked through Avios.com; for partner flights, blogs advise moving Avios to British Airways Executive Club instead."
+      - "Award changes or cancellations cost about EUR 42.50 per passenger per booking and are not allowed within 24 hours of departure."
+    sources:
+      - https://onemileatatime.com/guides/redeem-aer-lingus-avios/
+      - https://onemileatatime.com/guides/chase-ultimate-rewards-points-transfer-times/
+    verified: 2026-10-20
+
+  AC:
+    alliance: star
+    award_search_url: https://www.aircanada.com/aeroplan/redeem/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: online
+    phone: "1-800-361-5373"
+    holds: "none: Aeroplan does not hold awards. An agent can set up the award while you transfer during the call."
+    transfer_time: {chase: instant, capital_one: instant}
+    gotchas:
+      - "CAD 39 partner booking fee on non-Air Canada flights, even when booked online; phone bookings can add CAD 30."
+      - "Aeroplan has been reported to block useful partner award space at times, so a search result on the partner's own site may not book here."
+      - "Older sources report surcharges on Air Canada, Lufthansa and Austrian metal; check the price before transferring."
+    sources:
+      - https://www.aircanada.com/content/dam/aircanada/portal/documents/PDF/en/atpdr/ACF008.pdf
+      - https://thepointsguy.com/news/aeroplan-award-redemption
+      - https://saverocity.com/pointsadventure/aeroplan-blocking-lot-polish-awards
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  KL:
+    alliance: skyteam
+    award_search_url: https://www.flyingblue.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null  # no US Flying Blue number found on an official page
+    holds: "available by phone or chat before transferring, reportedly about 48 hours (blogs)."
+    transfer_time: {chase: instant, capital_one: instant}
+    gotchas:
+      - "Online search can show phantom availability that agents cannot book; search origin to destination and place a hold first."
+      - "Partner flights are inconsistent: do not transfer for a partner flight (for example Garuda) without a hold."
+    sources:
+      - https://milevalue.com/why-we-love-flying-blue-how-to-use-it-like-a-pro/
+      - https://yourmileagemayvary.com/2019/04/25/how-i-got-flying-blue-to-open-up-phantom-award-space/
+      - https://store.flyingblue.com/contact/
+    verified: 2026-10-20
+
+  BA:
+    alliance: oneworld
+    award_search_url: https://www.britishairways.com/en-us/executive-club/spending-avios/reward-flights
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: "1-800-452-1201"
+    holds: unknown
+    transfer_time: {chase: instant, capital_one: instant}
+    gotchas:
+      - "BA-operated long-haul awards carry large carrier surcharges (transatlantic roughly $200 one-way economy, $700 business); Cathay Asia Miles charges far less on BA flights."
+      - "For help booking a specific partner, BA says to call its call centre."
+    sources:
+      - https://www.britishairways.com/travel/contact-executive-club/public/en_us
+      - https://thepointsguy.com/news/sweet-spot-ba-fuel-surcharges
+      - https://onemileatatime.com/avoid-british-airways-surcharges/
+    verified: 2026-10-20
+
+  IB:
+    alliance: oneworld
+    award_search_url: https://www.iberia.com/us/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {chase: instant}
+    gotchas:
+      - "Iberia-operated awards carry lower surcharges than British Airways-operated ones (AwardWallet); reader reports say Chase transfers to Avios programs are not always instant."
+    sources:
+      - https://awardwallet.com/news/british-airways-club/iberia-fuel-surcharges-reduced/
+      - https://onemileatatime.com/guides/chase-ultimate-rewards-points-transfer-times/
+    verified: 2026-10-20
+
+  B6:
+    alliance: none
+    award_search_url: https://www.jetblue.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {chase: instant, capital_one: instant}
+    gotchas:
+      - "Partner access to JetBlue Mint has changed over time (Emirates can no longer book it; Qatar has been reported as the current partner); confirm before relying on a partner."
+    sources:
+      - https://viewfromthewing.com/?p=168362
+      - https://thriftytraveler.com/news/points/jetblue-mint-emirates
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  SQ:
+    alliance: star
+    award_search_url: https://www.singaporeair.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null
+    holds: unknown
+    transfer_time: {chase: "1-7 days", capital_one: "24-48 hours"}
+    gotchas:
+      - "Star Alliance partner awards can be booked online (since 2017) but non-Star partners need a call; not every partner route shows online."
+      - "Chase transfers to KrisFlyer are the slowest of Chase's partners (InsideFlyer: up to 2 days; reader reports up to a week). Confirm space can't vanish while waiting."
+    sources:
+      - https://www.pointhacks.com.au/krisflyer-star-alliance-devaluation-december-2017/
+      - https://www.shopback.sg/blog/travel/krisflyer-partner-airlines-2026-air-china-turkish-lufthansa-sweet-spots-sg
+      - https://insideflyer.com/posts/chase-ultimate-rewards-transfer-times-vary-by-partner/
+      - https://onemileatatime.com/guides/chase-ultimate-rewards-points-transfer-times/
+    verified: 2026-10-20
+
+  WN:
+    alliance: none
+    award_search_url: https://www.southwest.com/air/booking/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {chase: instant}
+    gotchas: []
+    sources:
+      - https://onemileatatime.com/guides/chase-ultimate-rewards-points-transfer-times/
+    verified: 2026-10-20
+
+  UA:
+    alliance: star
+    award_search_url: https://www.united.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null  # 1-800-864-8331 appears on united.com as a MileagePlus help line, not confirmed as the award reservations line
+    holds: "no free hold; paid FareLock only on itineraries flown entirely on United, not partner flights."
+    transfer_time: {chase: instant}
+    gotchas:
+      - "Reader reports often show Chase to United transfers taking days, not instant."
+      - "Phone booking fee is $25; agents often waive it when the award cannot be booked online."
+    sources:
+      - https://www.point.me/insights/award-holds/
+      - https://awardwallet.com/airlines/united-mileageplus/award-travel-rules/
+      - https://onemileatatime.com/guides/chase-ultimate-rewards-points-transfer-times/
+    verified: 2026-10-20
+
+  VS:
+    alliance: skyteam
+    award_search_url: https://www.virginatlantic.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: phone
+    phone: "+1 800 862 8621"
+    holds: unknown
+    transfer_time: {chase: instant, capital_one: instant}
+    gotchas:
+      - "Virgin's online award search is quirky; blogs recommend calling, especially for partner awards."
+      - "Virgin-operated Upper Class awards can carry fuel surcharges above $600 per way; Delta One awards use peak pricing."
+    sources:
+      - https://help.virginatlantic.com/us/en/ways-to-contact-us.html
+      - https://headforpoints.com/2016/02/17/virgin-flying-club-what-are-the-best-partner-awards-2/
+      - https://thepointsguy.com/news/virgin-flying-club-delta-one-surcharge
+    verified: 2026-10-20
+
+  AM:
+    alliance: skyteam
+    award_search_url: https://www.aeromexico.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "Sources conflict on whether partner awards (Delta and others) can be booked online since the 2023 relaunch; some say phone is needed."
+    sources:
+      - https://awardwallet.com/blog/best-aeromexico-club-premier-awards-sweet-spots/
+      - https://pointsnav.com/reward-programs/aeromexico
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  AV:
+    alliance: star
+    award_search_url: https://www.lifemiles.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: online
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "No fuel surcharges on Star Alliance partner awards; taxes and fees still apply."
+      - "Mixed-cabin awards are not allowed: the same cabin must be available on every segment."
+    sources:
+      - https://milevalue.com/maximizing-avianca-lifemiles/
+      - https://princeoftravel.com/points/avianca-lifemiles/
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  CX:
+    alliance: oneworld
+    award_search_url: https://www.cathaypacific.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: "24 hours to 5 days"}
+    gotchas:
+      - "Asia Miles charges much lower surcharges than other programs on British Airways flights (large savings in business/first)."
+      - "Cathay-operated awards pay Cathay's fuel surcharges in cash, which were raised again in 2026."
+    sources:
+      - https://onemileatatime.com/avoid-british-airways-surcharges/
+      - https://milelion.com/2026/03/27/cathay-pacific-hikes-fuel-surcharges-for-the-second-time-in-two-weeks/
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  EY:
+    alliance: none
+    award_search_url: https://www.etihad.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: "instant to 24 hours"}
+    gotchas:
+      - "Etihad passes on carrier surcharges on Etihad and partner awards."
+      - "Award cancellation/redeposit fees are among the highest of any program; first class on Air France is not bookable."
+    sources:
+      - https://onemileatatime.com/guides/redeem-etihad-guest-miles/
+      - https://www.australianfrequentflyer.com.au/overview-etihad-guest-redemptions
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  AY:
+    alliance: oneworld
+    award_search_url: https://www.finnair.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "Online partner booking works for some partners (BA, Cathay, Iberia, JAL, Qantas, Qatar); others (for example American, Alaska) need chat or a call with flight numbers ready."
+      - "Partner awards are priced on the full origin-destination trip, not per segment."
+    sources:
+      - https://10xtravel.com/finnair-plus-award-booking-instructions/
+      - https://thepointsguy.com/loyalty-programs/finnair-plus-avios-sweet-spots/
+    verified: 2026-10-20
+
+  QF:
+    alliance: oneworld
+    award_search_url: https://www.qantas.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: "instant to 48 hours"}
+    gotchas:
+      - "Qantas adds substantial fuel surcharges, especially on Qantas and British Airways flights."
+    sources:
+      - https://thepointsguy.com/guide/complete-guide-to-the-qantas-frequent-flyer-program/
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  QR:
+    alliance: oneworld
+    award_search_url: https://www.qatarairways.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: online
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "Awards may only be issued for the account holder, up to four adults on My List, or a Family & Friends group of up to six."
+      - "Partner award availability through Qatar is reported to be very limited; British Airways is the usual alternative for Qsuite."
+    sources:
+      - https://awardwallet.com/blog/?p=187872
+      - https://thriftytraveler.com/news/points/qsuites-award-space-american/
+      - https://thepointsguy.com/guide/capital-one-transfer-partners/
+    verified: 2026-10-20
+
+  TP:
+    alliance: star
+    award_search_url: https://www.flytap.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: unknown
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "Surcharges apply on some partners (reported: Lufthansa, SWISS, Austrian, Turkish, Asiana, EgyptAir); partner bookings via the Assistance Center carry service fees."
+    sources:
+      - https://onemileatatime.com/redeem-tap-air-portugal-miles/
+      - https://awardwallet.com/blog/?p=144319
+    verified: 2026-10-20
+
+  TK:
+    alliance: star
+    award_search_url: https://www.turkishairlines.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null  # blogs cite 1-800-874-8875; not found on an official page
+    holds: "agents reportedly hold awards for about 48-72 hours (blogs)."
+    transfer_time: {capital_one: "24-48 hours"}
+    gotchas:
+      - "Many partner itineraries are only visible or bookable by phone; find space on united.com or the Star Alliance tool first, then call."
+      - "Pricing has changed (reported 15,000 miles economy for United domestic); confirm the price before transferring."
+    sources:
+      - https://frequentmiler.com/turkish-miles-smiles-complete-guide/
+      - https://frequentmiler.com/book-turkish-awards-over-the-phone/
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  EK:
+    alliance: none
+    award_search_url: https://www.emirates.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: online
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "To book partners (including flydubai), choose flydubai and partner in the search drop-down instead of Emirates."
+    sources:
+      - https://www.theflightclub.it/en/2026/03/you-have-skywards-points-emirates-incredibly-just-lowered-award-ticket-prices-with-partners/amp/
+      - https://thepointsguy.com/guide/redeem-emirates-skywards-miles
+    verified: 2026-10-20
+
+  BR:
+    alliance: star
+    award_search_url: https://www.evaair.com/
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null
+    holds: unknown
+    transfer_time: {capital_one: "24-48 hours"}
+    gotchas:
+      - "EVA flights book fully online; other Star Alliance partner awards and all stopovers need a call to membership services."
+      - "EVA passes on carrier surcharges."
+    sources:
+      - https://milelion.com/2024/12/21/eva-air-infinity-mileagelands-an-underrated-programme-with-great-sweet-spots/
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+  JL:
+    alliance: oneworld
+    award_search_url: https://www.jal.co.jp/jp/en/jalmile/use/partner_air/oneworld/application.html
+    deep_link: null
+    deep_link_verified: false
+    partner_booking: mixed
+    phone: null  # a blog cites 800-525-3663; not found on an official page
+    holds: unknown
+    transfer_time: {capital_one: instant}
+    gotchas:
+      - "Online partner awards must be booked at least 48 hours before departure (phone: 24 hours), and the full mileage balance must already be in the account."
+      - "Check partner-airline sites for space first; blogs recommend having flight numbers ready before calling."
+    sources:
+      - https://jal.co.jp/jp/en/jalmile/use/partner_air/oneworld/application.html
+      - https://thriftytraveler.com/guides/points/how-to-find-book-jal-miles-deal/
+      - https://onemileatatime.com/guides/capital-one-mileage-transfer-times/
+    verified: 2026-10-20
+
+# Sources for carriers: https://www.insideflyer.com/posts/three-global-airline-alliances-and-their-members ,
+# https://flightpoints.com/blogs/star-alliance-member-airlines/ , https://travelvient.com/guides/airline-alliances-and-partners-2026/ ,
+# https://www.australianfrequentflyer.com.au/new-airlines-oneworld-skyteam-star-alliance  (checked 2026-10-20).
+# Recent moves reflected: ITA (AZ) joined Star 2026-04; SAS (SK) joined SkyTeam 2024-09; Hawaiian (HA), Oman Air (WY),
+# Fiji Airways (FJ) are oneworld; Virgin Atlantic (VS) is SkyTeam.
+carriers:
+  # Star Alliance
+  A3: star
+  AC: star
+  AI: star
+  AV: star
+  AZ: star
+  BR: star
+  CA: star
+  CM: star
+  ET: star
+  LH: star
+  LO: star
+  LX: star
+  MS: star
+  NH: star
+  OS: star
+  OU: star
+  OZ: star
+  SA: star
+  SN: star
+  SQ: star
+  TG: star
+  TK: star
+  TP: star
+  UA: star
+  ZH: star
+  # oneworld
+  AA: oneworld
+  AS: oneworld
+  AT: oneworld
+  AY: oneworld
+  BA: oneworld
+  CX: oneworld
+  FJ: oneworld
+  HA: oneworld
+  IB: oneworld
+  JL: oneworld
+  MH: oneworld
+  QF: oneworld
+  QR: oneworld
+  RJ: oneworld
+  UL: oneworld
+  WY: oneworld
+  # SkyTeam
+  AF: skyteam
+  AM: skyteam
+  AR: skyteam
+  CI: skyteam
+  DL: skyteam
+  GA: skyteam
+  KE: skyteam
+  KL: skyteam
+  KQ: skyteam
+  ME: skyteam
+  MF: skyteam
+  MU: skyteam
+  RO: skyteam
+  SK: skyteam
+  SV: skyteam
+  UX: skyteam
+  VN: skyteam
+  VS: skyteam
+  # Notable non-alliance carriers
+  B6: none
+  EI: none
+  EK: none
+  EY: none
+  FZ: none
+  LA: none
+  WN: none

@@ -2,6 +2,7 @@
   <form id="rf" class="filters" hx-get="/jobs/{{ job.id }}/results" hx-target="#results" hx-swap="outerHTML" hx-trigger="change, submit">
     <input type="hidden" name="sort" value="{{ q.sort or '' }}">
     <input type="hidden" name="dir" value="{{ q.dir or '' }}">
+    <input type="hidden" name="view" value="{{ view }}">
     <label>Program
       <select name="program"><option value="">any</option>
         {% for p in result_programs %}<option value="{{ p }}" {{ "selected" if q.program == p }}>{{ p }}</option>{% endfor %}
@@ -14,13 +15,51 @@
         {% endfor %}
       </select>
     </label>
+    <label>Carriers <input name="carriers" value="{{ q.carriers or '' }}" placeholder="AC, UA" class="narrow"></label>
     <label>Max bank pts <input type="number" name="max_points" value="{{ q.max_points or '' }}" min="0"></label>
     <label>Max taxes $ <input type="number" name="max_taxes" value="{{ q.max_taxes or '' }}" min="0"></label>
     <label>Min seats <input type="number" name="min_seats" value="{{ q.min_seats or '' }}" min="0"></label>
+    <label>Min % in cabin <input type="number" name="min_cabin_pct" value="{{ q.min_cabin_pct or '' }}" min="0" max="100"></label>
+    <fieldset class="checkset row">
+      <legend>Days</legend>
+      {% for value, label in days %}<label class="inline"><input type="checkbox" name="days" value="{{ value }}" {{ "checked" if value in sel_days }}> {{ label }}</label>{% endfor %}
+    </fieldset>
     <label class="inline"><input type="checkbox" name="hide_est" {{ "checked" if q.hide_est }}> Hide estimated</label>
     <span class="muted">{{ rows|length }} of {{ total_rows }} shown</span>
   </form>
-  {% if rows %}
+  <div class="viewtoggle" role="group" aria-label="Result view">
+    {% for v, label in [("list", "List"), ("compare", "Compare")] %}
+      <button type="button" class="secondary {{ 'active' if view == v }}" aria-pressed="{{ 'true' if view == v else 'false' }}"
+              hx-get="/jobs/{{ job.id }}/results" hx-include="#rf" hx-target="#results" hx-swap="outerHTML"
+              hx-vals='{{ {"view": v} | tojson }}'>{{ label }}</button>
+    {% endfor %}
+  </div>
+  {% if rows and view == "compare" %}
+  <div class="tablewrap"><table class="compare">
+    <caption class="muted">Cheapest option per cabin: best bank points, miles and seats. ~ marks award-chart estimates, * a mixed-cabin journey.</caption>
+    <thead><tr><th>Date</th><th>Route</th><th>Program</th>{% for c in cabins %}<th class="num">{{ c }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for g in grid %}
+      {% set n = loop.index %}
+      <tr>
+        <td>{{ g.date }}</td><td>{{ g.route }}</td><td>{{ g.program }}</td>
+        {% for c in cabins %}
+          {% set cell = g.cells.get(c) %}
+          <td class="num cell">
+            {% if cell %}
+              <b>{% if cell.estimated %}~{% endif %}{{ "{:,}".format(cell.points) if cell.points else "-" }}</b>{% if cell.bank %} <span class="muted">{{ cell.bank }}</span>{% endif %}
+              {% if cell.mix == "*" %}<span class="mix" title="Mixed cabin: {{ cell.mix_detail }} in {{ c }}, the rest in a lower cabin">*</span>{% elif cell.mix == "?" %}<span class="mix" title="{{ cell.mix_detail }}">?</span>{% endif %}<br>
+              <span class="muted">{{ "{:,}".format(cell.miles) }} mi, {{ "?" if cell.seats is none else cell.seats }} seats</span><br>
+              <button type="button" class="secondary small" hx-get="/jobs/{{ job.id }}/book/{{ cell.idx }}" hx-target="#cbook-{{ n }}" hx-swap="innerHTML">How to book</button>
+            {% else %}-{% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+      <tr class="bookrow"><td colspan="{{ 3 + cabins|length }}" id="cbook-{{ n }}"></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% elif rows %}
   <div class="tablewrap"><table>
     <thead><tr>
       {% for key, label in columns %}
@@ -36,9 +75,10 @@
     <tbody>
     {% for r in rows %}
       <tr>
-        <td>{{ r.date }}</td><td>{{ r.route }}</td>
+        <td>{{ r.date }}</td><td>{{ r.depart or "-" }}</td><td>{{ r.arrive or "-" }}</td><td>{{ r.route }}</td>
         <td class="num">{{ "?" if r.stops is none else ("nonstop" if r.stops == 0 else r.stops) }}</td>
-        <td>{{ r.program }}</td><td>{{ r.cabin }}</td>
+        <td>{{ r.program }}</td>
+        <td>{{ r.cabin }}{% if r.mix == "*" %}<span class="mix" title="Mixed cabin: {{ r.mix_detail }} in {{ r.cabin }}, the rest in a lower cabin">* {{ r.mix_detail }}</span>{% elif r.mix == "?" %}<span class="mix" title="{{ r.mix_detail }}">?</span>{% endif %}</td>
         <td class="num">{{ "{:,}".format(r.miles) }}</td>
         <td class="num">${{ "{:,.0f}".format(r.taxes) }}</td>
         <td class="num">{{ "{:,}".format(r.points) if r.points else "-" }}</td>
@@ -47,10 +87,13 @@
         <td class="num">{{ "${:,.0f}".format(r.cash) if r.cash is not none else "-" }}</td>
         <td class="num">{{ "%.1f"|format(r.cpp) if r.cpp is not none else "-" }}</td>
         <td class="num">{{ "?" if r.seats is none else r.seats }}</td>
+        <td>{{ r.seen }}</td>
         <td>{% if r.estimated %}<span class="est">EST</span>{% endif %}</td>
         <td class="note">{{ r.note }}</td>
-        <td>{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">book</a>{% endif %}</td>
+        <td class="book">{% if r.url %}<a href="{{ r.url }}" target="_blank" rel="noopener noreferrer">book</a>{% endif %}
+          <button type="button" class="secondary small" hx-get="/jobs/{{ job.id }}/book/{{ r.idx }}" hx-target="#book-{{ r.idx }}" hx-swap="innerHTML">How to book</button></td>
       </tr>
+      <tr class="bookrow"><td colspan="{{ columns|length }}" id="book-{{ r.idx }}"></td></tr>
     {% endfor %}
     </tbody>
   </table></div>

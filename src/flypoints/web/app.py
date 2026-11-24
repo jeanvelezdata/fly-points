@@ -6,6 +6,7 @@ handlers only read job state, so the server stays responsive during a long searc
 from __future__ import annotations
 
 import json
+import math
 import os
 import queue
 import threading
@@ -20,14 +21,19 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from .. import config, engine, paths
-from ..cli import _other_bank_points, _route
-from ..models import Cabin, RankedOption, SearchQuery
+from .. import booking, config, engine, paths
+from ..cli import _other_bank_points
+from ..models import Bank, Cabin, OptionFilters, RankedOption, SearchQuery
 from ..providers.base import AuthError
+from ..views import (
+    compare_grid, flatten_csv, mixed_cabin_marker, option_route as _route, option_times, parse_banks, parse_cabins,
+    seen_label, segment_lines,
+)
 
 HERE = Path(__file__).resolve().parent
 MAX_JOBS_KEPT = 50
 TRUE = {"on", "true", "1", "yes"}
+DAYS = [("0", "Mon"), ("1", "Tue"), ("2", "Wed"), ("3", "Thu"), ("4", "Fri"), ("5", "Sat"), ("6", "Sun")]
 
 # --- form parsing ---------------------------------------------------------------------------
 
@@ -72,11 +78,13 @@ def parse_params(raw: Mapping[str, Any]) -> tuple[dict | None, list[str]]:
     clean["date_to"] = d_to.isoformat() if d_to else ""
 
     try:
-        cabin = Cabin(str(raw.get("cabin", "J")).upper())
+        cabins = parse_cabins(raw.get("cabins") or raw.get("cabin") or [])
+        if not cabins:
+            raise ValueError
     except ValueError:
-        errors.append("Cabin: choose Y, W, J or F.")
-        cabin = Cabin.J
-    clean["cabin"] = cabin.value
+        errors.append("Cabin: choose at least one of Y, W, J or F.")
+        cabins = [Cabin.J]
+    clean["cabins"] = list(dict.fromkeys(c.value for c in cabins))
 
     try:
         max_searches = int(raw.get("max_searches", 8))
@@ -92,16 +100,67 @@ def parse_params(raw: Mapping[str, Any]) -> tuple[dict | None, list[str]]:
     known = config.load_programs()
     errors += [f"Unknown program {code!r}." for code in programs if code not in known]
     clean["programs"] = programs
-    for flag in ("include_cash", "include_estimates", "refresh"):
+    for flag in ("include_cash", "include_estimates", "refresh", "direct_only"):
         clean[flag] = _flag(raw.get(flag, False))
+
+    for key, label, cast in (
+        ("max_stops", "Max stops", int), ("max_taxes_usd", "Max taxes", float), ("max_points", "Max points", int),
+        ("min_seats", "Min seats", int), ("min_cabin_pct", "Min cabin %", int),
+    ):
+        clean[key] = _number(raw, key, label, cast, errors)
+    clean["carriers"] = [c.upper() for c in flatten_csv(raw.get("carriers"))]
+    try:
+        clean["days_of_week"] = sorted({int(d) for d in raw.get("days_of_week") or []})
+        if any(not 0 <= d <= 6 for d in clean["days_of_week"]):
+            raise ValueError
+    except ValueError:
+        errors.append("Days: choose weekdays from the list.")
+        clean["days_of_week"] = []
+    try:
+        clean["banks"] = [b.value for b in parse_banks(raw.get("banks") or [])]
+    except ValueError as e:
+        errors.append(str(e))
+        clean["banks"] = []
+    max_age = _number(raw, "max_age_hours", "Stored max age", float, errors)
+    clean["max_age_hours"] = engine.STORED_MAX_AGE_H if max_age is None else max_age
     return (None if errors else clean), errors
 
 
+def parse_sweep_params(raw: Mapping[str, Any]) -> tuple[dict | None, list[str]]:
+    """Like ``parse_params`` plus ``fresh_hours``; the sweep only uses the route, dates, cabins and caps."""
+    params, errors = parse_params(raw)
+    fresh = _number(raw, "fresh_hours", "Fresh hours", float, errors)
+    if params is None or errors:
+        return None, errors
+    params["fresh_hours"] = 24.0 if fresh is None else fresh
+    return params, errors
+
+
+def _number(raw: Mapping[str, Any], key: str, label: str, cast: Callable, errors: list[str]):
+    """A blank value is None; otherwise a finite number of 0 or more, or an error is recorded."""
+    text = str(raw.get(key) if raw.get(key) is not None else "").strip()
+    if not text:
+        return None
+    try:
+        n = cast(text)
+        if not math.isfinite(n) or n < 0:
+            raise ValueError
+        return n
+    except ValueError:
+        errors.append(f"{label}: enter a number of 0 or more.")
+        return None
+
+
 def form_to_raw(form) -> dict:
-    keys = ("origins", "destinations", "date_from", "date_to", "cabin", "max_searches")
+    keys = (
+        "origins", "destinations", "date_from", "date_to", "max_searches", "max_stops", "carriers", "max_taxes_usd",
+        "max_points", "min_seats", "min_cabin_pct", "max_age_hours", "fresh_hours",
+    )
     raw: dict[str, Any] = {k: form.get(k, "") for k in keys}
-    raw["programs"] = form.getlist("programs")
-    for flag in ("include_cash", "include_estimates", "refresh"):
+    raw["cabins"] = form.getlist("cabins") or form.getlist("cabin")
+    for key in ("programs", "days_of_week", "banks"):
+        raw[key] = form.getlist(key)
+    for flag in ("include_cash", "include_estimates", "refresh", "direct_only"):
         raw[flag] = flag in form
     return raw
 
@@ -112,35 +171,66 @@ def build_query(params: dict) -> SearchQuery:
         destinations=_tokens(params["destinations"]),
         date_from=date.fromisoformat(params["date_from"]),
         date_to=date.fromisoformat(params["date_to"]),
-        cabin=Cabin(params["cabin"]),
+        cabins=[Cabin(c) for c in params["cabins"]],
         max_searches=params["max_searches"],
         programs=params["programs"] or None,
+        direct_only=params["direct_only"],
+        max_stops=params["max_stops"],
+        carriers=params["carriers"] or None,
+        days_of_week=params["days_of_week"] or None,
+        max_taxes_usd=params["max_taxes_usd"],
+        max_points=params["max_points"],
+        min_seats=params["min_seats"],
+        banks=[Bank(b) for b in params["banks"]] or None,
+        min_cabin_pct=params["min_cabin_pct"],
     )
 
 
 # --- result rows: sorting and filtering -----------------------------------------------------
 
-SORT_COLUMNS = ("date", "route", "stops", "program", "cabin", "miles", "taxes", "points", "bank", "cash", "cpp", "seats")
+SORT_COLUMNS = ("date", "depart", "route", "stops", "program", "cabin", "miles", "taxes", "points", "bank", "cash", "cpp", "seats")
 COLUMNS = [
-    ("date", "Date"), ("route", "Route"), ("stops", "Stops"), ("program", "Program"), ("cabin", "Cabin"), ("miles", "Miles"),
+    ("date", "Date"), ("depart", "Depart"), (None, "Arrive"), ("route", "Route"), ("stops", "Stops"), ("program", "Program"), ("cabin", "Cabin"), ("miles", "Miles"),
     ("taxes", "Taxes"), ("points", "Best bank pts"), ("bank", "Best bank"), (None, "Other bank"),
-    ("cash", "Cash"), ("cpp", "cpp"), ("seats", "Seats"), (None, "Flags"), (None, "Note"), (None, "Book"),
+    ("cash", "Cash"), ("cpp", "cpp"), ("seats", "Seats"), (None, "Seen"), (None, "Flags"), (None, "Note"), (None, "Book"),
 ]
 NUMERIC = {"stops", "miles", "taxes", "points", "cash", "cpp", "seats"}
 
 
-def make_row(o: RankedOption) -> dict:
+def safe_url(url: str | None) -> str | None:
+    """Only http(s) links are rendered, whatever a provider or data file contains."""
+    return url if url and url.startswith(("http://", "https://")) else None
+
+
+def make_row(o: RankedOption, idx: int) -> dict:
+    """``idx`` is the option's position in the job's full result list (used for the booking panel)."""
     a = o.offer
-    url = a.booking_url if a.booking_url and a.booking_url.startswith(("http://", "https://")) else None
+    marker, detail = mixed_cabin_marker(a)
+    depart, arrive = option_times(o) or (None, None)
     return {
-        "date": a.date.isoformat(), "route": _route(o),
+        "idx": idx, "date": a.date.isoformat(), "depart": depart, "arrive": arrive, "route": _route(o),
         "stops": len(a.segments) - 1 if a.segments else None,  # None: no routing (chart estimates)
-        "program": a.program_code, "cabin": a.cabin.value,
+        "program": a.program_code, "cabin": a.cabin.value, "mix": marker, "mix_detail": detail,
         "miles": a.miles, "taxes": a.taxes_usd, "points": o.best_bank_points,
         "bank": o.best_bank.label if o.best_bank else None, "other": _other_bank_points(o),
         "cash": o.cash_fare.price_usd if o.cash_fare else None, "cpp": o.cpp, "seats": a.seats,
-        "estimated": a.estimated, "note": o.note or "", "url": url,
+        "seen": seen_label(a), "estimated": a.estimated, "note": o.note or "", "url": safe_url(a.booking_url),
     }
+
+
+def make_grid(options: list[RankedOption], idx_of: Mapping[int, int]) -> list[dict]:
+    """Compare-view rows; ``idx_of`` maps id(option) to its position in the job's result list."""
+    grid = []
+    for row in compare_grid(options):
+        cells = {}
+        for cabin, c in row.cells.items():
+            marker, detail = mixed_cabin_marker(c.option.offer)
+            cells[cabin.value] = {
+                "idx": idx_of[id(c.option)], "points": c.points, "bank": c.bank, "miles": c.miles, "seats": c.seats,
+                "estimated": c.estimated, "mix": marker, "mix_detail": detail, "seen": seen_label(c.option.offer),
+            }
+        grid.append({"program": row.program_code, "route": row.route, "date": row.date.isoformat(), "cells": cells})
+    return grid
 
 
 def _num(text: Any) -> float | None:
@@ -150,19 +240,40 @@ def _num(text: Any) -> float | None:
         return None
 
 
-def select_rows(rows: list[dict], q: Mapping[str, str]) -> list[dict]:
-    """Apply the filter form values, then the sort, from query params."""
-    max_points, max_taxes, min_seats, max_stops = (
-        _num(q.get(k, "")) for k in ("max_points", "max_taxes", "min_seats", "max_stops")
+def _multi(q: Mapping[str, Any], key: str) -> list[str]:
+    """All values of a repeated query param (a plain mapping gives its single value)."""
+    if hasattr(q, "getlist"):
+        values = q.getlist(key)
+    else:
+        v = q.get(key, [])
+        values = [v] if isinstance(v, str) else list(v)
+    return [v for v in values if v != ""]
+
+
+def option_filters(q: Mapping[str, str]) -> OptionFilters:
+    """The engine filters set by the results filter form (blank or invalid values are ignored)."""
+    max_points, max_taxes, min_seats, max_stops, min_cabin_pct = (
+        n if n is not None and math.isfinite(n) else None
+        for n in (_num(q.get(k, "")) for k in ("max_points", "max_taxes", "min_seats", "max_stops", "min_cabin_pct"))
     )
+    days = sorted({int(d) for d in _multi(q, "days") if d.isdigit() and int(d) <= 6})
+    return OptionFilters(
+        max_points=None if max_points is None else int(max_points),
+        max_taxes_usd=max_taxes,
+        min_seats=None if min_seats is None else int(min_seats),
+        max_stops=None if max_stops is None else int(max_stops),
+        carriers=flatten_csv(q.get("carriers", "")) or None,
+        days_of_week=days or None,
+        min_cabin_pct=None if min_cabin_pct is None else int(min_cabin_pct),
+    )
+
+
+def select_rows(rows: list[dict], q: Mapping[str, str]) -> list[dict]:
+    """Apply the program / hide-estimates filters, then the sort, from query params."""
     out = [
         r for r in rows
         if (not q.get("program") or r["program"] == q["program"])
-        and (max_points is None or (r["points"] is not None and r["points"] <= max_points))
-        and (max_taxes is None or r["taxes"] <= max_taxes)
         and (not _flag(q.get("hide_est", "")) or not r["estimated"])
-        and (min_seats is None or r["seats"] is None or r["seats"] >= min_seats)
-        and (max_stops is None or (r["stops"] is not None and r["stops"] <= max_stops))
     ]
     column = q.get("sort", "")
     if column in SORT_COLUMNS:
@@ -176,15 +287,18 @@ def select_rows(rows: list[dict], q: Mapping[str, str]) -> list[dict]:
 
 
 class Job:
-    def __init__(self, params: dict):
+    def __init__(self, params: dict, kind: str = "search"):
         self.id = uuid.uuid4().hex[:10]
         self.params = params
+        self.kind = kind  # search | sweep
         self.status = "queued"  # queued | running | done | error
         self.done = 0
         self.total = 0
         self.message = ""
         self.result: engine.SearchResult | None = None
         self.rows: list[dict] = []
+        self.stats: engine.SweepStats | None = None  # sweeps only
+        self.stop_event = threading.Event()  # sweeps only
         self.error: str | None = None
         self.started: float | None = None
         self.finished: float | None = None
@@ -206,26 +320,39 @@ class Job:
     @property
     def title(self) -> str:
         p = self.params
-        return f"{p['origins']} to {p['destinations']}, {p['date_from']}..{p['date_to']}, {p['cabin']}"
+        text = f"{p['origins']} to {p['destinations']}, {p['date_from']}..{p['date_to']}, {','.join(p['cabins'])}"
+        if self.kind == "sweep":
+            return f"Sweep {text}"
+        return f"{text} (stored)" if p.get("stored") else text
 
 
 class JobRunner:
-    """FIFO queue drained by one daemon thread, so only one live search runs at a time."""
+    """FIFO queue drained by one daemon thread, so only one live search or sweep runs at a time.
+    Stored searches read only the local store, so they run immediately in the caller's thread."""
 
-    def __init__(self, search_fn, cache):
+    def __init__(self, search_fn, cache, stored_fn=engine.search_stored, sweep_fn=engine.sweep):
         self._search_fn, self._cache = search_fn, cache
+        self._stored_fn, self._sweep_fn = stored_fn, sweep_fn
         self._jobs: dict[str, Job] = {}
         self._queue: queue.Queue[Job] = queue.Queue()
         self._lock = threading.Lock()
         threading.Thread(target=self._worker, daemon=True, name="flypoints-jobs").start()
 
-    def submit(self, params: dict) -> Job:
-        job = Job(params)
+    def _register(self, job: Job) -> Job:
         with self._lock:
             self._jobs[job.id] = job
             for old in [j.id for j in self._jobs.values() if not j.active][:-MAX_JOBS_KEPT]:
                 del self._jobs[old]
+        return job
+
+    def submit(self, params: dict, kind: str = "search") -> Job:
+        job = self._register(Job(params, kind))
         self._queue.put(job)
+        return job
+
+    def submit_stored(self, params: dict) -> Job:
+        job = self._register(Job({**params, "stored": True}))
+        self._run(job)
         return job
 
     def get(self, job_id: str) -> Job | None:
@@ -243,11 +370,24 @@ class JobRunner:
         job.started, job.status = time.time(), "running"
         p = job.params
         try:
-            result = self._search_fn(
-                build_query(p), cache=self._cache, progress=on_progress, refresh=p["refresh"],
-                include_estimates=p["include_estimates"], include_cash=p["include_cash"],
-            )
-            job.result, job.rows = result, [make_row(o) for o in result.options]
+            if job.kind == "sweep":
+                job.stats = self._sweep_fn(
+                    _tokens(p["origins"]), _tokens(p["destinations"]), date.fromisoformat(p["date_from"]),
+                    date.fromisoformat(p["date_to"]), [Cabin(c) for c in p["cabins"]], p["max_searches"],
+                    p["fresh_hours"], progress=on_progress, stop_event=job.stop_event,
+                )
+            else:
+                if p.get("stored"):
+                    result = self._stored_fn(
+                        build_query(p), cache=self._cache, max_age_hours=p["max_age_hours"],
+                        include_estimates=p["include_estimates"],
+                    )
+                else:
+                    result = self._search_fn(
+                        build_query(p), cache=self._cache, progress=on_progress, refresh=p["refresh"],
+                        include_estimates=p["include_estimates"], include_cash=p["include_cash"],
+                    )
+                job.result, job.rows = result, [make_row(o, i) for i, o in enumerate(result.options)]
             job.status = "done"
         except AuthError as e:
             job.error, job.status = str(e), "error"
@@ -294,11 +434,14 @@ class SavedSearches:
 # --- app ------------------------------------------------------------------------------------
 
 
-def create_app(cache=None, search_fn=engine.search, saved_path: Path | str | None = None) -> FastAPI:
+def create_app(
+    cache=None, search_fn=engine.search, saved_path: Path | str | None = None,
+    stored_fn=engine.search_stored, sweep_fn=engine.sweep,
+) -> FastAPI:
     app = FastAPI(title="fly-points")
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
-    runner = JobRunner(search_fn, cache)
+    runner = JobRunner(search_fn, cache, stored_fn, sweep_fn)
     saved = SavedSearches(Path(saved_path) if saved_path else paths.STATE_DIR / "saved_searches.json")
     app.state.runner, app.state.saved = runner, saved
 
@@ -306,22 +449,33 @@ def create_app(cache=None, search_fn=engine.search, saved_path: Path | str | Non
         return templates.TemplateResponse(request, name, ctx, status_code=status)
 
     def results_context(job: Job, q: Mapping[str, str]) -> dict:
-        return {
-            "job": job, "rows": select_rows(job.rows, q), "total_rows": len(job.rows), "q": dict(q),
+        idx_of = {id(o): i for i, o in enumerate(job.result.options)}
+        options = engine.filter_options(job.result.options, option_filters(q))
+        rows = select_rows([make_row(o, idx_of[id(o)]) for o in options], q)
+        view = "compare" if q.get("view") == "compare" else "list"
+        ctx = {
+            "job": job, "rows": rows, "total_rows": len(job.rows), "q": dict(q), "view": view,
             "columns": COLUMNS, "numeric": NUMERIC, "result_programs": sorted({r["program"] for r in job.rows}),
+            "days": DAYS, "sel_days": _multi(q, "days"),
         }
+        if view == "compare":
+            kept = {r["idx"] for r in rows}  # the program / hide-estimates filters apply to the grid too
+            ctx["grid"] = make_grid([o for o in options if idx_of[id(o)] in kept], idx_of)
+            ctx["cabins"] = [c.value for c in Cabin]
+        return ctx
 
     def job_view(request: Request, job: Job):
         status = job.status  # read once: the worker thread may finish mid-render
-        ctx = results_context(job, {}) if status == "done" else {"job": job}
-        return render(request, "_job.html", status_snapshot=status, **ctx)
+        ctx = results_context(job, {}) if status == "done" and job.kind == "search" else {"job": job}
+        return render(request, "_sweep.html" if job.kind == "sweep" else "_job.html", status_snapshot=status, **ctx)
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request):
         return render(
             request, "index.html",
             regions={k: ", ".join(v) for k, v in config.load_regions().items()},
-            programs=list(config.load_programs().values()), saved=saved.list(),
+            programs=list(config.load_programs().values()), saved=saved.list(), days=DAYS, cabins=list(Cabin),
+            banks=list(Bank), stored_age=engine.STORED_MAX_AGE_H,
         )
 
     @app.post("/jobs", response_class=HTMLResponse)
@@ -330,6 +484,46 @@ def create_app(cache=None, search_fn=engine.search, saved_path: Path | str | Non
         if errors:
             return render(request, "_errors.html", status=422, errors=errors)
         return job_view(request, runner.submit(params))
+
+    @app.post("/jobs/stored", response_class=HTMLResponse)
+    async def start_stored_job(request: Request):
+        params, errors = parse_params(form_to_raw(await request.form()))
+        if errors:
+            return render(request, "_errors.html", status=422, errors=errors)
+        return job_view(request, runner.submit_stored(params))
+
+    @app.post("/sweeps", response_class=HTMLResponse)
+    async def start_sweep(request: Request):
+        params, errors = parse_sweep_params(form_to_raw(await request.form()))
+        if errors:
+            return render(request, "_errors.html", status=422, errors=errors)
+        return job_view(request, runner.submit(params, "sweep"))
+
+    @app.get("/sweeps/{job_id}/progress", response_class=HTMLResponse)
+    def sweep_progress(request: Request, job_id: str):
+        job = runner.get(job_id)
+        if job is None or job.kind != "sweep":
+            return render(request, "_errors.html", status=404, errors=["Unknown sweep (the server may have restarted)."])
+        return job_view(request, job)
+
+    @app.post("/sweeps/{job_id}/stop", response_class=HTMLResponse)
+    def stop_sweep(request: Request, job_id: str):
+        job = runner.get(job_id)
+        if job is None or job.kind != "sweep":
+            return render(request, "_errors.html", status=404, errors=["Unknown sweep (the server may have restarted)."])
+        job.stop_event.set()
+        return job_view(request, job)
+
+    @app.get("/jobs/{job_id}/book/{index}", response_class=HTMLResponse)
+    def job_booking(request: Request, job_id: str, index: int):
+        job = runner.get(job_id)
+        if job is None or job.status != "done" or job.result is None or not 0 <= index < len(job.result.options):
+            return render(request, "_errors.html", status=404, errors=["No such result to book."])
+        option = job.result.options[index]
+        plan = booking.build_booking_plan(option)
+        steps = [{"kind": s.kind, "text": s.text, "url": safe_url(s.url)} for s in plan.steps]
+        return render(request, "_booking.html", plan=plan, steps=steps, row=make_row(option, index),
+                      flights=segment_lines(option))
 
     @app.get("/jobs/{job_id}/progress", response_class=HTMLResponse)
     def job_progress(request: Request, job_id: str):
@@ -341,7 +535,7 @@ def create_app(cache=None, search_fn=engine.search, saved_path: Path | str | Non
     @app.get("/jobs/{job_id}/results", response_class=HTMLResponse)
     def job_results(request: Request, job_id: str):
         job = runner.get(job_id)
-        if job is None or job.status != "done":
+        if job is None or job.status != "done" or job.result is None:
             return render(request, "_errors.html", status=404, errors=["No finished results for this job."])
         return render(request, "_results.html", **results_context(job, request.query_params))
 

@@ -1,0 +1,27 @@
+/* Monkey Island night: stepped Caribbean sky, pixel stars, SCUMM verb-panel bevels, gold titles. */
+:root {
+  --bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='180' shape-rendering='crispEdges'%3E%3Cg fill='%23fff6c8'%3E%3Crect x='14' y='22' width='2' height='2'/%3E%3Crect x='96' y='8' width='2' height='2'/%3E%3Crect x='170' y='40' width='2' height='2'/%3E%3Crect x='214' y='112' width='2' height='2'/%3E%3Crect x='60' y='130' width='2' height='2'/%3E%3C/g%3E%3Cg fill='%23a99ce0'%3E%3Crect x='40' y='70' width='2' height='2'/%3E%3Crect x='130' y='96' width='2' height='2'/%3E%3Crect x='196' y='160' width='2' height='2'/%3E%3Crect x='8' y='166' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(#120a2a 0 22%, #1a1038 22% 40%, #24154a 40% 58%, #31195c 58% 74%, #43206a 74% 88%, #5a2a74 88%);
+  --ink: #ece4ff; --ink-muted: #a99ccc;
+  --head-muted: #b9aee0;
+  --logo: #f6c945; --logo-shadow: #a8541c; --logo-shadow-2: #3b1a10;
+  --title: #f6c945; --title-shadow: #3b1a10;
+  --panel: #1e1636; --frame-outer: #0a0618; --frame-inner: #4b3d86; --drop: rgba(5, 2, 15, .55);
+  --field-bg: #0f0a22; --field-ink: #f4efff; --bevel-hi: #4b3d86; --bevel-lo: #050210;
+  --icon-filter: invert(1);
+  --btn-bg: #2c2152; --btn-ink: #6fe3d4; --btn-hi: #5a4b9c; --btn-lo: #120a2a; --btn-edge: #050210;
+  --btn2-bg: #241a44; --btn2-ink: #c7bdf0;
+  --accent: #6fe3d4; --focus: #f6c945; --cursor: #f6c945; --check-on: #6fe3d4;
+  --th-bg: #2c2152; --th-ink: #f6c945; --row-alt: #241a42; --row-hl: #3a2a6a; --rule: #3a2e66;
+  --bar-track: #0f0a22; --bar-fill: #6fe3d4; --bar-fill-2: #3aa89c; --plane-color: #f6c945;
+  --err-bg: #3e1028; --err-ink: #ff8a8a; --warn-bg: #3a2a10; --warn-ink: #f6c945;
+}
+button:hover:not(:disabled) { color: #fff6c8; }
+/* The sea: a pixel horizon fixed at the bottom of the screen. */
+body::after {
+  content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 56px; z-index: -1; pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='8' shape-rendering='crispEdges'%3E%3Cpath fill='%2348b8b0' d='M0 0h6v2H0zM16 4h8v2h-8z'/%3E%3C/svg%3E") repeat-x 0 6px,
+    linear-gradient(#1c6f78 0 12px, #155a66 12px 28px, #0f4552 28px);
+}

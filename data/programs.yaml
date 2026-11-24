@@ -14,118 +14,118 @@ banks:
 programs:
   EI:
     name: Aer Lingus AerClub
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
   AC:
     name: Air Canada Aeroplan
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant; Capital One: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   KL:
     name: Air France-KLM Flying Blue
     aliases: [AF]
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant; Capital One: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   BA:
     name: British Airways Executive Club (Avios)
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant; Capital One: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   IB:
     name: Iberia Plus (Avios)
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
   B6:
     name: JetBlue TrueBlue
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant; Capital One: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "5:3", verified: 2026-10-19}
   SQ:
     name: Singapore KrisFlyer
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: 1-7 days; Capital One: 24-48 hours"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   WN:
     name: Southwest Rapid Rewards
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
   UA:
     name: United MileagePlus
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
   VS:
     name: Virgin Atlantic Flying Club (Virgin Red points)
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Chase: instant; Capital One: instant"
     banks:
       chase: {ratio: "1:1", verified: 2026-10-19}
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   AM:
     name: Aeromexico Rewards
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   AV:
     name: Avianca LifeMiles
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   CX:
     name: Cathay Asia Miles
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: 24 hours to 5 days"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   EY:
     name: Etihad Guest
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant to 24 hours"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   AY:
     name: Finnair Plus
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   QF:
     name: Qantas Frequent Flyer
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant to 48 hours"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   QR:
     name: Qatar Airways Privilege Club
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   TP:
     name: TAP Miles&Go
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   TK:
     name: Turkish Miles&Smiles
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: 24-48 hours"
     banks:
       capital_one: {ratio: "1:1", verified: 2026-10-19}
   EK:
     name: Emirates Skywards
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "4:3", verified: 2026-10-19}
   BR:
     name: EVA Air Infinity MileageLands
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: 24-48 hours"
     banks:
       capital_one: {ratio: "4:3", verified: 2026-10-19}
   JL:
     name: Japan Airlines Mileage Bank
-    transfer_time: unknown   # not researched yet
+    transfer_time: "Capital One: instant"
     banks:
       capital_one: {ratio: "4:3", verified: 2026-10-19}

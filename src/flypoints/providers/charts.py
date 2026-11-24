@@ -73,29 +73,32 @@ class ChartEstimator:
     max_window_days = 366
 
     def search(
-        self, origin: str, destination: str, date_from: date, date_to: date, cabin: Cabin
+        self, origin: str, destination: str, date_from: date, date_to: date, cabins: list[Cabin]
     ) -> list[AwardOffer]:
-        """One estimated offer per chart program reachable from Chase or Capital One."""
+        """One estimated offer per chart program and cabin reachable from Chase or Capital One."""
         programs = load_programs()
         offers = []
         for code, chart in _charts().items():
             program = programs.get(code)
-            miles = estimate(code, origin, destination, cabin)
-            if program is None or not program.banks or miles is None:
+            if program is None or not program.banks:
                 continue
-            offers.append(
-                AwardOffer(
-                    provider=self.name,
-                    program_code=code,
-                    program_name=program.name,
-                    origin=origin.upper(),
-                    destination=destination.upper(),
-                    date=date_from,
-                    cabin=cabin,
-                    miles=miles,
-                    taxes_usd=float(chart["taxes_usd_typical"]),
-                    estimated=True,
-                    fetched_at=datetime.now(),
+            for cabin in cabins:
+                miles = estimate(code, origin, destination, cabin)
+                if miles is None:
+                    continue
+                offers.append(
+                    AwardOffer(
+                        provider=self.name,
+                        program_code=code,
+                        program_name=program.name,
+                        origin=origin.upper(),
+                        destination=destination.upper(),
+                        date=date_from,
+                        cabin=cabin,
+                        miles=miles,
+                        taxes_usd=float(chart["taxes_usd_typical"]),
+                        estimated=True,
+                        fetched_at=datetime.now(),
+                    )
                 )
-            )
         return offers

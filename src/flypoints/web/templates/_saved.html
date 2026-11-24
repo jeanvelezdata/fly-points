@@ -3,7 +3,7 @@
   {% for s in saved %}
   <li>
     <b>{{ s.name }}</b>
-    <span class="muted">{{ s.params.origins }} to {{ s.params.destinations }}, {{ s.params.date_from }}..{{ s.params.date_to }}, {{ s.params.cabin }}</span>
+    <span class="muted">{{ s.params.origins }} to {{ s.params.destinations }}, {{ s.params.date_from }}..{{ s.params.date_to }}, {{ (s.params.cabins or [s.params.cabin])|join(",") }}</span>
     <button class="secondary" hx-post="/saved/{{ s.id }}/run" hx-target="#job">Run</button>
     <button class="secondary danger" hx-delete="/saved/{{ s.id }}" hx-target="#saved" hx-confirm="Delete saved search {{ s.name }}?">Delete</button>
   </li>

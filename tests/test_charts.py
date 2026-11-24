@@ -91,11 +91,11 @@ def test_chart_files_valid():
 
 
 def test_search_offers():
-    offers = ChartEstimator().search("SJU", "MAD", date(2027, 3, 1), date(2027, 3, 4), Cabin.J)
+    offers = ChartEstimator().search("SJU", "MAD", date(2027, 3, 1), date(2027, 3, 4), [Cabin.J])
     by_code = {o.program_code: o for o in offers}
     assert set(by_code) == {"AC", "TK"}
     o = by_code["AC"]
     assert (o.miles, o.estimated, o.provider, o.date) == (60_000, True, "charts", date(2027, 3, 1))
     assert o.seats is None and o.segments == [] and o.booking_url is None
     assert o.program_name == "Air Canada Aeroplan"
-    assert ChartEstimator().search("SJU", "XXX", date(2027, 3, 1), date(2027, 3, 1), Cabin.J) == []
+    assert ChartEstimator().search("SJU", "XXX", date(2027, 3, 1), date(2027, 3, 1), [Cabin.J]) == []

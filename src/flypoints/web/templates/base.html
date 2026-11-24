@@ -4,7 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>fly-points</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=Press+Start+2P&display=swap">
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/themes/island.css" id="theme">
+  <script>
+    // Theme comparison: restore the last pick before first paint.
+    try {
+      var t = localStorage.getItem("flypoints-theme");
+      if (/^(island|pokemon|stardew|blend)$/.test(t)) document.getElementById("theme").href = "/static/themes/" + t + ".css";
+    } catch (e) {}
+  </script>
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   <script>
     // Let HTMX swap friendly error fragments returned with 4xx statuses.
@@ -17,7 +28,26 @@
   </script>
 </head>
 <body>
-  <header><h1><a href="/">fly-points</a></h1><span class="muted">Capital One miles and Chase Ultimate Rewards award search</span></header>
+  <header><h1><a href="/">fly-points</a></h1><span class="muted">Capital One miles and Chase Ultimate Rewards award search</span>
+    <label class="themepick">Theme
+      <select id="themepick">
+        <option value="island">Monkey Island night</option>
+        <option value="pokemon">Pokémon dialog</option>
+        <option value="stardew">Stardew wood</option>
+        <option value="blend">Blend</option>
+      </select>
+    </label>
+  </header>
+  <script>
+    (function () {
+      var pick = document.getElementById("themepick"), link = document.getElementById("theme");
+      pick.value = link.getAttribute("href").replace(/^.*\/|\.css$/g, "");
+      pick.addEventListener("change", function () {
+        link.href = "/static/themes/" + pick.value + ".css";
+        try { localStorage.setItem("flypoints-theme", pick.value); } catch (e) {}
+      });
+    })();
+  </script>
   <main>{% block content %}{% endblock %}</main>
 </body>
 </html>

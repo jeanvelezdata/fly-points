@@ -1,0 +1,19 @@
+/* Pokemon (GBA): route-grass field, red header band, white double-border dialog windows, grey text drop shadow. */
+:root {
+  --bg: repeating-conic-gradient(#86cc8e 0 25%, #92d69a 0 50%) 0 0 / 16px 16px;
+  --ink: #383840; --ink-muted: #6a6a78; --ink-shadow: 1px 1px 0 #d8d8d0;
+  --head-bg: #e04040; --head-rule: 4px solid #8a1c1c; --head-muted: #ffe0e0;
+  --logo: #ffffff; --logo-shadow: #8a1c1c; --logo-shadow-2: #4a0c0c;
+  --title: #383840; --title-shadow: #d8d8d0;
+  --panel: #fbfbf8; --frame-outer: #384050; --frame-inner: #8aa8d8; --drop: rgba(40, 70, 40, .35);
+  --field-bg: #ffffff; --field-ink: #383840; --bevel-hi: #ffffff; --bevel-lo: #9aa4b8;
+  --btn-bg: #f0f0e8; --btn-ink: #383840; --btn-hi: #ffffff; --btn-lo: #b8b8b0; --btn-edge: #384050; --btn-ink-shadow: 1px 1px 0 #d8d8d0;
+  --btn2-bg: #ffffff; --btn2-ink: #3060c0;
+  --accent: #3060c0; --focus: #e04040; --cursor: #383840; --check-on: #e04040;
+  --th-bg: #384050; --th-ink: #ffffff; --row-alt: #eef2fa; --row-hl: #fff3b8; --rule: #c8d0e0;
+  --bar-track: #506858; --bar-fill: #58d080; --bar-fill-2: #38a860; --plane-color: #e04040;
+  --err-bg: #ffe4e0; --err-ink: #b02020; --warn-bg: #fff4c8; --warn-ink: #806010;
+}
+/* The primary action reads like the selected battle-menu option. */
+button[type=submit] { background: #3060c0; color: #fff; --btn-hi: #6890e0; --btn-lo: #1c3c80; --btn-ink-shadow: 1px 1px 0 #1c3c80; }
+.viewtoggle button.active { background: #3060c0; color: #fff; }

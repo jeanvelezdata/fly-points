@@ -4,14 +4,21 @@
   {% if status_snapshot == "queued" %}
     <p>Queued: waiting for the running search to finish.</p>
   {% elif status_snapshot == "running" %}
-    <progress max="{{ job.total or 1 }}" value="{{ job.done }}"></progress>
-    <p class="muted">{{ job.done }}/{{ job.total }} searches ({{ job.elapsed }}s) {{ job.message }}</p>
+    <div class="flight" style="--p: {{ (100 * job.done / (job.total or 1))|round|int }}%">
+      <span class="plane" aria-hidden="true"></span>
+      <progress max="{{ job.total or 1 }}" value="{{ job.done }}"></progress>
+    </div>
+    <p class="muted">{{ job.done }}/{{ job.total }} searches ({{ job.elapsed }}s) {{ job.message }}<span class="blink" aria-hidden="true">&#9660;</span></p>
   {% elif status_snapshot == "error" %}
     <div class="errors" role="alert"><b>Search failed.</b> {{ job.error }}</div>
   {% else %}
     {% set r = job.result %}
+    {% if job.params.stored %}
+    <p class="muted">{{ total_rows }} options | stored results only (searched within {{ job.params.max_age_hours }}h)</p>
+    {% else %}
     <p class="muted">{{ total_rows }} options | searches: {{ r.searches_run }} run, {{ r.searches_cached }} cached,
       {{ r.searches_skipped }} skipped (cap {{ job.params.max_searches }}), {{ r.searches_planned }} planned | {{ job.elapsed }}s</p>
+    {% endif %}
     {% for e in r.errors %}<div class="errors">error: {{ e }}</div>{% endfor %}
     {% for w in r.warnings %}<div class="warnings">warning: {{ w }}</div>{% endfor %}
     {% include "_results.html" %}

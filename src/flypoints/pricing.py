@@ -89,16 +89,19 @@ def build_ranked_option(
     programs: dict[str, Program],
     bank_rules: dict[Bank, BankRules],
     bonuses: list[Bonus],
+    banks: list[Bank] | None = None,
 ) -> RankedOption | None:
     """Price an offer through each bank. None if neither bank reaches the program.
-    best_bank = fewest points (tie -> Chase)."""
+    best_bank = fewest points (tie -> Chase). ``banks`` restricts best_bank to those banks (None
+    if none of them reaches the program); bank_options still lists every reachable bank."""
     options = bank_options(offer, offer.miles, programs, bank_rules, bonuses)
-    if not options:
+    usable = [o for o in options if banks is None or o.bank in banks]
+    if not usable:
         return None
-    best = min(options, key=lambda o: o.bank_points)  # min() keeps the first (chase) on ties
+    best = min(usable, key=lambda o: o.bank_points)  # min() keeps the first (chase) on ties
     note = None
-    if len(options) == 2 and options[0].bank_points != options[1].bank_points:
-        diff = abs(options[0].bank_points - options[1].bank_points)
+    if len(usable) == 2 and usable[0].bank_points != usable[1].bank_points:
+        diff = abs(usable[0].bank_points - usable[1].bank_points)
         note = f"cheaper via {best.bank.label} (−{diff:,} pts)"
     price = cash_fare.price_usd if cash_fare else None
     return RankedOption(

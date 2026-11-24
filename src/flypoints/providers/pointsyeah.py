@@ -17,8 +17,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
 from flypoints import config, paths
 from flypoints.cache import Cache, make_key
-from flypoints.models import AwardOffer, Cabin, Segment
+from flypoints.models import CABIN_ORDER, AwardOffer, Cabin, Segment
 from flypoints.providers.base import AuthError, ProviderError
+from flypoints.providers.charts import distance_miles
 
 CLIENT_ID = "3im8jrentts1pguuouv5s57gfu"
 COGNITO_URL = "https://cognito-idp.us-east-1.amazonaws.com/"
@@ -91,6 +92,35 @@ def _segment_cabin(name: str | None) -> Cabin | None:
         return None
 
 
+def _segment_minutes(value) -> int | None:
+    """Segment ``duration`` is flight minutes without the layover (a 450 on UA51 EWR-MAD; the
+    route-level ``duration`` is the sum of segment durations plus layovers). Mostly ints, but
+    some programs send floats ("450.0") or strings."""
+    try:
+        minutes = round(float(value))
+    except (TypeError, ValueError):
+        return None
+    return minutes if minutes > 0 else None
+
+
+def mixed_cabin_pct(segments: list[Segment], cabin: Cabin) -> int | None:
+    """Percent (0-100, rounded) of the journey flown below ``cabin`` (order Y<W<J<F).
+
+    Segments are weighted by great-circle distance when every segment's airports are in
+    airports.yaml, else by ``duration_min`` when every segment has one. None (unknown) if any
+    segment's cabin is unknown or no consistent weights exist.
+    """
+    if not segments or any(s.cabin is None for s in segments):
+        return None
+    weights = [distance_miles(s.origin, s.destination) for s in segments]
+    if any(w is None for w in weights):
+        weights = [s.duration_min for s in segments]
+    if any(w is None for w in weights) or not sum(weights):
+        return None
+    below = sum(w for w, s in zip(weights, segments) if CABIN_ORDER[s.cabin] < CABIN_ORDER[cabin])
+    return round(100 * below / sum(weights))
+
+
 def _parse_route(entry: dict, route: dict, programs: dict, fetched_at: datetime) -> AwardOffer:
     pay = route["payment"]
     seats = int(pay["seats"]) if pay.get("seats") is not None else 9999  # UA sends "9999" as str
@@ -103,9 +133,11 @@ def _parse_route(entry: dict, route: dict, programs: dict, fetched_at: datetime)
             arrive=datetime.fromisoformat(s["at"]),
             aircraft=s.get("aircraft") or None,
             cabin=_segment_cabin(s.get("cabin")),
+            duration_min=_segment_minutes(s.get("duration")),
         )
         for s in route["segments"]
     ]
+    cabin = Cabin.from_provider(pay["cabin"])
     return AwardOffer(
         provider="pointsyeah",
         program_code=config.resolve_code(route.get("code") or entry["code"], programs),
@@ -113,13 +145,14 @@ def _parse_route(entry: dict, route: dict, programs: dict, fetched_at: datetime)
         origin=entry["departure"],
         destination=entry["arrival"],
         date=date.fromisoformat(entry["date"]),
-        cabin=Cabin.from_provider(pay["cabin"]),
+        cabin=cabin,
         miles=int(pay["miles"]),
         taxes_usd=float(pay["tax"]),
         seats=None if seats == 9999 else seats,
         segments=segments,
         booking_url=route.get("url") or None,
         fetched_at=fetched_at,
+        mixed_cabin_pct=mixed_cabin_pct(segments, cabin),
     )
 
 
@@ -238,14 +271,14 @@ class PointsYeahProvider:
         return data
 
     def search(
-        self, origin: str, destination: str, date_from: date, date_to: date, cabin: Cabin
+        self, origin: str, destination: str, date_from: date, date_to: date, cabins: list[Cabin]
     ) -> list[AwardOffer]:
         if (date_to - date_from).days + 1 > self.max_window_days:
             raise ProviderError(f"PointsYeah accepts at most {self.max_window_days} days per search")
         plain = json.dumps(
             {
                 "search_type": "one_way",
-                "cabins": [cabin.to_provider()],
+                "cabins": [c.to_provider() for c in cabins],
                 "segments": [
                     {
                         "arrival": destination,
@@ -280,7 +313,8 @@ class PointsYeahProvider:
             self._sleep(self.poll_floor_s)
 
         if self._cache is not None:
-            key = make_key(origin, destination, date_from.isoformat(), date_to.isoformat(), cabin.value)
+            codes = sorted(c.value for c in cabins)
+            key = make_key(origin, destination, date_from.isoformat(), date_to.isoformat(), codes)
             self._cache.put_json(RAW_NAMESPACE, key, snapshots, RAW_TTL_S)
         offers, self.skipped_non_usd = _parse(snapshots, datetime.now(timezone.utc))
         return offers

@@ -12,12 +12,12 @@
       </label>
       <label>From date <input type="date" name="date_from" required></label>
       <label>To date <input type="date" name="date_to"></label>
-      <label>Cabin
-        <select name="cabin">
-          <option value="Y">Y economy</option><option value="W">W premium economy</option>
-          <option value="J" selected>J business</option><option value="F">F first</option>
-        </select>
-      </label>
+      <fieldset class="checkset">
+        <legend>Cabins</legend>
+        {% for c in cabins %}
+          <label class="inline"><input type="checkbox" name="cabins" value="{{ c.value }}" {{ "checked" if c.value == "J" }}> {{ c.value }} {{ c.to_provider() }}</label>
+        {% endfor %}
+      </fieldset>
       <label>Max searches <input type="number" name="max_searches" value="8" min="1"></label>
       <label>Programs (none = all)
         <select name="programs" multiple size="4">
@@ -30,9 +30,32 @@
         <label class="inline"><input type="checkbox" name="refresh"> Refresh (ignore cache)</label>
       </div>
     </div>
+    <details class="more">
+      <summary>Filters</summary>
+      <div class="grid">
+        <label class="inline"><input type="checkbox" name="direct_only"> Nonstop only</label>
+        <label>Max stops <input type="number" name="max_stops" min="0"></label>
+        <label>Carriers (operating, e.g. AC, UA) <input name="carriers" placeholder="any"></label>
+        <label>Max taxes $ <input type="number" name="max_taxes_usd" min="0"></label>
+        <label>Max bank points <input type="number" name="max_points" min="0"></label>
+        <label>Min seats <input type="number" name="min_seats" min="0"></label>
+        <label>Min % in the offer's cabin <input type="number" name="min_cabin_pct" min="0" max="100"></label>
+        <fieldset class="checkset">
+          <legend>Departure days (none = all)</legend>
+          {% for value, label in days %}<label class="inline"><input type="checkbox" name="days_of_week" value="{{ value }}"> {{ label }}</label>{% endfor %}
+        </fieldset>
+        <fieldset class="checkset">
+          <legend>Bank (none = both)</legend>
+          {% for b in banks %}<label class="inline"><input type="checkbox" name="banks" value="{{ b.value }}"> {{ b.label }}</label>{% endfor %}
+        </fieldset>
+      </div>
+    </details>
     <p class="muted">Regions: {% for name, codes in regions.items() %}<span title="{{ codes }}"><b>{{ name }}</b> ({{ codes }})</span>{% if not loop.last %}; {% endif %}{% endfor %}</p>
     <div class="actions">
       <button type="submit">Search</button>
+      <button type="button" hx-post="/jobs/stored" hx-include="#searchform" hx-target="#job" hx-swap="innerHTML"
+              title="Instant: shows only results already stored from earlier searches; no live search">Search stored (instant)</button>
+      <label class="inline">max age (h) <input type="number" name="max_age_hours" value="{{ stored_age }}" min="0" step="any" class="narrow"></label>
       <input name="name" placeholder="Name to save this search" class="name">
       <button type="button" class="secondary" hx-post="/saved" hx-include="#searchform" hx-target="#saved">Save</button>
     </div>
@@ -43,4 +66,29 @@
 <section class="card"><h2>Saved searches</h2><div id="saved">{% include "_saved.html" %}</div></section>
 
 <div id="job"></div>
+
+<section class="card">
+  <h2>Sweep</h2>
+  <p class="muted">Fill the local store with live searches for a long date range (up to a year ahead), then use
+    "Search stored (instant)". Sweeps share the queue with live searches. Windows searched within the fresh
+    period are skipped.</p>
+  <form id="sweepform" hx-post="/sweeps" hx-target="#sweep" hx-swap="innerHTML">
+    <div class="grid">
+      <label>Origins <input name="origins" value="SJU" required></label>
+      <label>Destinations <input name="destinations" placeholder="MAD, CDG or EUR" required></label>
+      <label>From date <input type="date" name="date_from" required></label>
+      <label>To date <input type="date" name="date_to" required></label>
+      <fieldset class="checkset">
+        <legend>Cabins</legend>
+        {% for c in cabins %}
+          <label class="inline"><input type="checkbox" name="cabins" value="{{ c.value }}" {{ "checked" if c.value == "J" }}> {{ c.value }} {{ c.to_provider() }}</label>
+        {% endfor %}
+      </fieldset>
+      <label>Max searches <input type="number" name="max_searches" value="40" min="1"></label>
+      <label>Fresh hours <input type="number" name="fresh_hours" value="24" min="0" step="any"></label>
+    </div>
+    <div class="actions"><button type="submit">Start sweep</button></div>
+  </form>
+  <div id="sweep"></div>
+</section>
 {% endblock %}

@@ -1,0 +1,26 @@
+<details class="booking" open>
+  <summary>How to book: {{ row.program }} {{ row.route }} {{ row.date }} {{ row.cabin }}</summary>
+  {% if flights %}
+    <ul class="flights">{% for f in flights %}<li>{{ f }}</li>{% endfor %}</ul>
+    <p class="muted">Local airport times.</p>
+  {% endif %}
+  <ol class="steps">
+    {% for s in steps %}
+      <li class="step {{ s.kind }}"><span class="kind">{{ s.kind }}</span> {{ s.text }}
+        {% if s.url %}<a href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.url }}</a>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  {% if plan.alternatives %}
+    <h3>Alternatives</h3>
+    <ul>
+      {% for alt in plan.alternatives %}
+        <li><b>{{ alt.program_code }}</b> {{ alt.program_name }} (via {{ alt.banks|map(attribute="label")|join(", ") }}): <span class="muted">{{ alt.reason }}</span></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if plan.unknowns %}
+    <div class="warnings"><b>Unknown, not guessed:</b>
+      <ul>{% for u in plan.unknowns %}<li>{{ u }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+</details>

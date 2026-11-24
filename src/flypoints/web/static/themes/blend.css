@@ -1,0 +1,19 @@
+/* Blend: Monkey Island night backdrop, Pokemon dialog windows with a gold ring, Stardew wood buttons. */
+@import url("island.css");
+:root {
+  --ink: #302848; --ink-muted: #6a6088; --ink-shadow: 1px 1px 0 #ddd8ea;
+  --title: #43206a; --title-shadow: #f6c945;
+  --panel: #fbf9ff; --frame-outer: #120a2a; --frame-inner: #f6c945; --drop: rgba(5, 2, 15, .55);
+  --field-bg: #ffffff; --field-ink: #302848; --bevel-hi: #ffffff; --bevel-lo: #a99ccc;
+  --icon-filter: none;
+  --btn-bg: #dc7b2c; --btn-ink: #fff1c8; --btn-hi: #f5a356; --btn-lo: #a8501c; --btn-edge: #3b1a10; --btn-ink-shadow: 1px 1px 0 #5b2b0a;
+  --btn2-bg: #f5c070; --btn2-ink: #5b2b0a;
+  --accent: #2c7a8a; --focus: #2c7a8a; --cursor: #43206a; --check-on: #2c7a8a;
+  --th-bg: #43206a; --th-ink: #f6c945; --row-alt: #f1edfa; --row-hl: #fff3c4; --rule: #d8d0ea;
+  --bar-track: #2c2152; --bar-fill: #f6c945; --bar-fill-2: #c8901c; --plane-color: #43206a;
+  --err-bg: #ffe4ea; --err-ink: #a01c40; --warn-bg: #fff4c8; --warn-ink: #7a5600;
+}
+button:hover:not(:disabled) { color: #ffffff; }
+button.secondary { --btn-hi: #ffd890; --btn-lo: #c8883c; --btn-ink-shadow: none; }
+button.secondary:hover:not(:disabled) { color: #3b1a10; }
+button.danger { color: #a01c10; }

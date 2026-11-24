@@ -1,0 +1,24 @@
+<div id="sweeppanel" data-job-id="{{ job.id }}" class="sweeppanel"
+  {% if status_snapshot in ("queued", "running") %}hx-get="/sweeps/{{ job.id }}/progress" hx-trigger="every 1s" hx-swap="outerHTML"{% endif %}>
+  <h3>{{ job.title }}</h3>
+  {% if status_snapshot == "queued" %}
+    <p>Queued: waiting for the running search to finish.</p>
+  {% elif status_snapshot == "running" %}
+    <div class="flight" style="--p: {{ (100 * job.done / (job.total or 1))|round|int }}%">
+      <span class="plane" aria-hidden="true"></span>
+      <progress max="{{ job.total or 1 }}" value="{{ job.done }}"></progress>
+    </div>
+    <p class="muted">{{ job.done }}/{{ job.total }} searches ({{ job.elapsed }}s) {{ job.message }}<span class="blink" aria-hidden="true">&#9660;</span></p>
+  {% elif status_snapshot == "error" %}
+    <div class="errors" role="alert"><b>Sweep failed.</b> {{ job.error }}</div>
+  {% else %}
+    {% set st = job.stats %}
+    <p>{{ "Stopped early." if st.stopped else "Finished." }} {{ st.planned }} windows planned: {{ st.skipped_fresh }} already fresh,
+      {{ st.skipped_cap }} over the cap ({{ job.params.max_searches }}), {{ st.run }} run | {{ job.elapsed }}s</p>
+    {% for e in st.errors %}<div class="errors">error: {{ e }}</div>{% endfor %}
+  {% endif %}
+  {% if status_snapshot in ("queued", "running") %}
+    <button type="button" class="secondary danger" hx-post="/sweeps/{{ job.id }}/stop" hx-target="#sweeppanel" hx-swap="outerHTML"
+            {{ "disabled" if job.stop_event.is_set() }}>{{ "Stopping..." if job.stop_event.is_set() else "Stop" }}</button>
+  {% endif %}
+</div>

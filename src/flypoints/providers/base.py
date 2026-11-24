@@ -27,11 +27,11 @@ class AwardProvider(Protocol):
     max_window_days: int
 
     def search(
-        self, origin: str, destination: str, date_from: date, date_to: date, cabin: Cabin
+        self, origin: str, destination: str, date_from: date, date_to: date, cabins: list[Cabin]
     ) -> list[AwardOffer]:
         """Award offers for one airport pair over an inclusive date window.
 
-        May return offers in other cabins too; the engine filters. Raises ProviderError.
+        ``cabins`` are the cabins wanted; may return offers in other cabins too, the engine filters. Raises ProviderError.
         """
         ...
 
