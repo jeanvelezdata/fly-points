@@ -50,9 +50,31 @@ Fixes, in order of value per effort:
    Iberia-operated flights. `data/charts/IB.yaml` would give estimate rows, with price but no seat
    availability, through the existing `ChartEstimator`. `data/charts/README.md` currently says
    BA/IB have no chart: verify Iberia's current table before writing numbers.
-4. **A live Avios source** (later, only if 1–3 aren't enough). seats.aero Pro is $9.99/mo with an
-   API, licensed for non-commercial use. Check whether it covers IB/BA and whether serving friends
-   fits its terms. Scraping iberia.com directly is not recommended: it is bot-protected and fragile.
+4. **A live Avios source via seats.aero.** Researched 2026-11-24 from seats.aero's developer docs
+   and terms; nothing has been tested with a key yet.
+   - **Price and access:** Pro is $12.99/mo or $109.99/yr since 2026-11-09. The Partner API is
+     cached search only: live search is not available to Pro users. 1,000 calls/day.
+   - **Covered by the API today:** QR (`qatar`), AY (`finnair`), SQ (`singapore`) and EY
+     (`etihad`). Qatar and Singapore rows come without taxes or seat counts.
+   - **IB and BA:** added to the seats.aero website in beta (2026), but they're **not listed as
+     API sources**. Whether the API serves them, and whether SJU–MAD is covered, needs one
+     `GET /routes?source=iberia` call with a key.
+   - **Not covered at all:** EI, CX, TP, BR, JL.
+   - **Terms:** non-commercial use is allowed with visible attribution. Flights more than 60 days
+     out must not be shown to third parties unless they sign in through seats.aero's OAuth (each
+     friend with their own Pro account) or there's a commercial agreement. Friends behind a
+     password are still third parties, so either limit seats.aero rows to 60 days for friends or
+     ask support@seats.aero.
+   - **Integration sketch:**
+     - a new `providers/seatsaero.py`, with taxes and segments coming from the trips endpoint;
+     - a per-provider rate limit in `engine._run_searches`, which currently gives every non-chart
+       provider PointsYeah's limits;
+     - a `seatsaero:` source name per program in `programs.yaml`;
+     - its own counter in the M3 daily budget.
+
+   Alternatives: Award Travel Finder ($49/mo, MCP-only; names BA/IB/QR/CX/EY, with estimated
+   taxes) and AwardWallet's award-search API (pricing on request). Scraping iberia.com directly is
+   not recommended: it is bot-protected and fragile.
 
 ## 3. Target architecture
 
@@ -113,6 +135,18 @@ If this ever feels like too much coupling, the same layout moves unchanged to a 
 (about $5/mo).
 
 ## 5. Modifications before deployment
+
+**Status (2026-11-24):** M1 and M3–M7 are implemented and committed locally, with the suite at 294
+passed. M2 is a VM-side step with no code. The web app reads these settings from its environment;
+all are unset locally, which keeps local behaviour unchanged. Put them in `/etc/flypoints/env` on
+the VM:
+
+```
+FLYPOINTS_MAX_SEARCHES=8          # M3: per live search
+FLYPOINTS_MAX_SWEEP_SEARCHES=40   # M3: per sweep
+FLYPOINTS_DAILY_SEARCHES=60       # M3: live PointsYeah searches per day, all users together
+FLYPOINTS_AUTH_MESSAGE=Award search is temporarily unavailable; ask Jean to refresh the search login.   # M4
+```
 
 Each item lists its verification. Run the suite after all of them:
 `C:/Users/jeanv/.venvs/flypoints/Scripts/python.exe -m pytest -q`.
@@ -176,7 +210,8 @@ Run as root over the existing access (`ssh -i ~/.ssh/ig_agent_vm root@<VM_IP>`; 
    `uv pip install --python /srv/flypoints/.venv/bin/python -e "/srv/flypoints[dev]"`.
    *Verify:* `pytest -q` passes in `/srv/flypoints`.
 3. **Secrets.** Create `/etc/flypoints/env` (mode 0640, root:flypoints) containing
-   `POINTSYEAH_REFRESH_TOKEN=…` and, optionally, the SerpApi key. Type it in on the VM; never paste
+   `POINTSYEAH_REFRESH_TOKEN=…`, the four `FLYPOINTS_*` limits from §5, and, optionally, the
+   SerpApi key. Type it in on the VM; never paste
    it into a tracked file or a chat.
 4. **Service.** `/etc/systemd/system/flypoints.service`: `User=flypoints`,
    `EnvironmentFile=/etc/flypoints/env`, `WorkingDirectory=/srv/flypoints`,

@@ -108,6 +108,7 @@ def test_chart_searches_do_not_count_toward_cap(cache, store):
     live, charts = FakeAward(), FakeAward(name="charts", window=366)
     r = run(query(max_searches=1), [live, charts], cache, store)
     assert r.searches_run == 2 and r.searches_skipped == 0
+    assert r.live_searches_run == 1  # what the web daily budget spends
 
 
 def test_cache_hit_on_second_run_and_cached_do_not_count_toward_cap(cache, store):

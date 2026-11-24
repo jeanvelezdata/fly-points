@@ -461,3 +461,93 @@ def test_saved_search_with_legacy_cabin_key_still_runs(tmp_path):
     run = c.post("/saved/abc12345/run")
     assert run.status_code == 200
     assert program_order(wait_done(c, job_id(run.text))) == ["AC", "AV", "KL"]
+
+
+# --- shared-deployment guards (architecture.md M3-M7) ----------------------------------------
+
+from flypoints import paths  # noqa: E402
+from flypoints.cache import Cache  # noqa: E402
+from flypoints.web import app as web_app  # noqa: E402
+from flypoints.web.app import Limits  # noqa: E402
+
+
+def test_max_searches_cap_rejects_live_search_sweep_and_saved_run(tmp_path):
+    c = TestClient(create_app(search_fn=lambda q, **kw: fake_result(), saved_path=tmp_path / "s.json",
+                              limits=Limits(max_searches=8, max_sweep_searches=40)))
+    r = c.post("/jobs", data={**FORM, "max_searches": "500"})
+    assert r.status_code == 422 and "at most 8 per search" in r.text
+    assert c.post("/jobs", data={**FORM, "max_searches": "8"}).status_code == 200
+    r = c.post("/sweeps", data={**SWEEP, "max_searches": "41"})
+    assert r.status_code == 422 and "at most 40 per sweep" in r.text
+    saved = c.post("/saved", data={**FORM, "max_searches": "500", "name": "big"}).text
+    item_id = re.search(r"/saved/(\w+)/run", saved).group(1)
+    assert c.post(f"/saved/{item_id}/run").status_code == 422
+    assert 'max="8"' in c.get("/").text and 'max="40"' in c.get("/").text
+
+
+def test_no_cap_by_default(client):
+    assert client.post("/jobs", data={**FORM, "max_searches": "500"}).status_code == 200
+
+
+def test_daily_budget_clamps_then_falls_back_to_stored(tmp_path):
+    seen = []
+
+    def live(query, **kw):
+        seen.append(query.max_searches)
+        return fake_result().model_copy(update={"live_searches_run": query.max_searches})
+
+    def stored(query, **kw):
+        return fake_result()
+
+    cache = Cache(tmp_path / "c.sqlite")
+    c = TestClient(create_app(cache=cache, search_fn=live, stored_fn=stored, saved_path=tmp_path / "s.json",
+                              limits=Limits(daily_searches=5)))
+    wait_done(c, start(c, max_searches="3"))
+    html = wait_done(c, start(c, max_searches="3"))
+    assert seen == [3, 2] and "cap 2" in html  # clamped to what was left
+    html = wait_done(c, start(c, max_searches="3"))
+    assert seen == [3, 2] and "budget (5) is used up" in html and "stored results only" in html
+    assert "budget (5) is used up" in settle_sweep(c, job_id(c.post("/sweeps", data=SWEEP).text))
+    assert web_app.DailyBudget(cache, 5).used() == 5  # survives a restart: kept in the cache table
+
+
+def test_auth_message_replaces_provider_text(tmp_path):
+    def fn(query, **kw):
+        raise AuthError("Token expired: re-copy it.")
+
+    c = TestClient(create_app(search_fn=fn, saved_path=tmp_path / "s.json",
+                              limits=Limits(auth_message="Award search is unavailable; ask Jean.")))
+    html = wait_done(c, start(c))
+    assert "ask Jean" in html and "re-copy" not in html
+
+
+def test_flights_column_shows_operating_flights(tmp_path):
+    def seg(flight, a, b):
+        return Segment(flight_number=flight, origin=a, destination=b, depart=NOW, arrive=NOW)
+
+    o = AwardOffer(provider="t", program_code="AV", program_name="AV", origin="SJU", destination="MAD",
+                   date=date(2026, 12, 2), cabin=Cabin.Y, miles=35000, taxes_usd=125.0,
+                   segments=[seg("AV259", "SJU", "BOG"), seg("IB424", "BOG", "MAD")], fetched_at=NOW)
+    result = engine.SearchResult(options=[build_ranked_option(o, None, load_programs(), load_bank_rules(), [])])
+    c = TestClient(create_app(search_fn=lambda q, **kw: result, saved_path=tmp_path / "s.json"))
+    html = wait_done(c, start(c, cabin="Y"))
+    assert "<th>Flights</th>" in html and "AV259 · IB424" in html
+
+
+def test_form_lists_programs_without_live_source(client):
+    html = client.get("/").text
+    assert "Not searched live (no data source): " in html and "IB" in html
+    assert "IB Iberia Plus (Avios) (estimates only)" in html and "AC Air Canada Aeroplan (estimates only)" not in html
+
+
+def test_serve_purges_expired_cache_entries(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "STATE_DIR", tmp_path)
+    cache = Cache()
+    cache.put_json("ns", "old", 1, -1)
+    cache.put_json("ns", "new", 2, 3600)
+    cache.close()
+    import uvicorn
+    monkeypatch.setattr(uvicorn, "run", lambda *a, **kw: None)
+    web_app.serve()
+    db = Cache(tmp_path / "cache.sqlite")
+    assert db._db.execute("SELECT key FROM cache").fetchall() == [("new",)]

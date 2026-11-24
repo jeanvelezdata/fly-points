@@ -6,12 +6,14 @@ handlers only read job state, so the server stays responsive during a long searc
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import queue
 import threading
 import time
 import uuid
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -22,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from .. import booking, config, engine, paths
+from ..cache import Cache
 from ..cli import _other_bank_points
 from ..models import Bank, Cabin, OptionFilters, RankedOption, SearchQuery
 from ..providers.base import AuthError
@@ -32,6 +35,55 @@ from ..views import (
 
 HERE = Path(__file__).resolve().parent
 MAX_JOBS_KEPT = 50
+log = logging.getLogger(__name__)
+
+
+# --- limits for a shared deployment ---------------------------------------------------------
+
+
+def _env_int(name: str) -> int | None:
+    text = os.environ.get(name, "").strip()
+    return int(text) if text else None
+
+
+@dataclass(frozen=True)
+class Limits:
+    """Server-side guards for a shared PointsYeah token. None means no limit (local default)."""
+
+    max_searches: int | None = None  # per live search job
+    max_sweep_searches: int | None = None  # per sweep job
+    daily_searches: int | None = None  # live PointsYeah searches per day, all users together
+    auth_message: str | None = None  # shown instead of the provider's AuthError text
+
+    @classmethod
+    def from_env(cls) -> "Limits":
+        return cls(
+            max_searches=_env_int("FLYPOINTS_MAX_SEARCHES"),
+            max_sweep_searches=_env_int("FLYPOINTS_MAX_SWEEP_SEARCHES"),
+            daily_searches=_env_int("FLYPOINTS_DAILY_SEARCHES"),
+            auth_message=os.environ.get("FLYPOINTS_AUTH_MESSAGE", "").strip() or None,
+        )
+
+
+class DailyBudget:
+    """Live searches used today, kept in the Cache table so a restart doesn't reset it.
+    Only the job worker thread spends it, so there is no check-then-spend race."""
+
+    NAMESPACE = "web_budget"
+
+    def __init__(self, cache: Cache, limit: int):
+        self._cache, self.limit = cache, limit
+
+    def used(self, today: date | None = None) -> int:
+        return self._cache.get_json(self.NAMESPACE, (today or date.today()).isoformat()) or 0
+
+    def remaining(self, today: date | None = None) -> int:
+        return max(self.limit - self.used(today), 0)
+
+    def spend(self, n: int, today: date | None = None) -> None:
+        today = today or date.today()
+        if n > 0:
+            self._cache.put_json(self.NAMESPACE, today.isoformat(), self.used(today) + n, 2 * 86400)
 TRUE = {"on", "true", "1", "yes"}
 DAYS = [("0", "Mon"), ("1", "Tue"), ("2", "Wed"), ("3", "Thu"), ("4", "Fri"), ("5", "Sat"), ("6", "Sun")]
 
@@ -190,7 +242,7 @@ def build_query(params: dict) -> SearchQuery:
 
 SORT_COLUMNS = ("date", "depart", "route", "stops", "program", "cabin", "miles", "taxes", "points", "bank", "cash", "cpp", "seats")
 COLUMNS = [
-    ("date", "Date"), ("depart", "Depart"), (None, "Arrive"), ("route", "Route"), ("stops", "Stops"), ("program", "Program"), ("cabin", "Cabin"), ("miles", "Miles"),
+    ("date", "Date"), ("depart", "Depart"), (None, "Arrive"), ("route", "Route"), (None, "Flights"), ("stops", "Stops"), ("program", "Program"), ("cabin", "Cabin"), ("miles", "Miles"),
     ("taxes", "Taxes"), ("points", "Best bank pts"), ("bank", "Best bank"), (None, "Other bank"),
     ("cash", "Cash"), ("cpp", "cpp"), ("seats", "Seats"), (None, "Seen"), (None, "Flags"), (None, "Note"), (None, "Book"),
 ]
@@ -209,6 +261,7 @@ def make_row(o: RankedOption, idx: int) -> dict:
     depart, arrive = option_times(o) or (None, None)
     return {
         "idx": idx, "date": a.date.isoformat(), "depart": depart, "arrive": arrive, "route": _route(o),
+        "flights": " · ".join(s.flight_number for s in a.segments),  # operating flights, e.g. "AV259 · IB424"
         "stops": len(a.segments) - 1 if a.segments else None,  # None: no routing (chart estimates)
         "program": a.program_code, "cabin": a.cabin.value, "mix": marker, "mix_detail": detail,
         "miles": a.miles, "taxes": a.taxes_usd, "points": o.best_bank_points,
@@ -330,9 +383,13 @@ class JobRunner:
     """FIFO queue drained by one daemon thread, so only one live search or sweep runs at a time.
     Stored searches read only the local store, so they run immediately in the caller's thread."""
 
-    def __init__(self, search_fn, cache, stored_fn=engine.search_stored, sweep_fn=engine.sweep):
+    def __init__(
+        self, search_fn, cache, stored_fn=engine.search_stored, sweep_fn=engine.sweep,
+        budget: DailyBudget | None = None, auth_message: str | None = None,
+    ):
         self._search_fn, self._cache = search_fn, cache
         self._stored_fn, self._sweep_fn = stored_fn, sweep_fn
+        self._budget, self._auth_message = budget, auth_message
         self._jobs: dict[str, Job] = {}
         self._queue: queue.Queue[Job] = queue.Queue()
         self._lock = threading.Lock()
@@ -369,6 +426,14 @@ class JobRunner:
 
         job.started, job.status = time.time(), "running"
         p = job.params
+        live = not p.get("stored")
+        remaining = self._budget.remaining() if self._budget and live else None
+        if remaining:  # spend at most what is left of today's budget
+            p = job.params = {**p, "max_searches": min(p["max_searches"], remaining)}
+        if job.kind == "sweep" and remaining == 0:
+            job.error = f"Today's live-search budget ({self._budget.limit}) is used up; try again tomorrow."
+            job.status, job.finished = "error", time.time()
+            return
         try:
             if job.kind == "sweep":
                 job.stats = self._sweep_fn(
@@ -376,21 +441,31 @@ class JobRunner:
                     date.fromisoformat(p["date_to"]), [Cabin(c) for c in p["cabins"]], p["max_searches"],
                     p["fresh_hours"], progress=on_progress, stop_event=job.stop_event,
                 )
+                if self._budget:
+                    self._budget.spend(job.stats.run)
             else:
-                if p.get("stored"):
+                if p.get("stored") or remaining == 0:
                     result = self._stored_fn(
                         build_query(p), cache=self._cache, max_age_hours=p["max_age_hours"],
                         include_estimates=p["include_estimates"],
                     )
+                    if remaining == 0:
+                        job.params = {**p, "stored": True}
+                        result.warnings.insert(0, f"Today's live-search budget ({self._budget.limit}) is used up, "
+                                                  "so these are stored results only.")
                 else:
                     result = self._search_fn(
                         build_query(p), cache=self._cache, progress=on_progress, refresh=p["refresh"],
                         include_estimates=p["include_estimates"], include_cash=p["include_cash"],
                     )
+                    if self._budget:
+                        self._budget.spend(result.live_searches_run)
                 job.result, job.rows = result, [make_row(o, i) for i, o in enumerate(result.options)]
             job.status = "done"
         except AuthError as e:
-            job.error, job.status = str(e), "error"
+            if self._auth_message:
+                log.warning("award search login failed: %s", e)
+            job.error, job.status = self._auth_message or str(e), "error"
         except Exception as e:  # keep the worker alive whatever a search throws
             job.error, job.status = f"{type(e).__name__}: {e}", "error"
         job.finished = time.time()
@@ -436,17 +511,27 @@ class SavedSearches:
 
 def create_app(
     cache=None, search_fn=engine.search, saved_path: Path | str | None = None,
-    stored_fn=engine.search_stored, sweep_fn=engine.sweep,
+    stored_fn=engine.search_stored, sweep_fn=engine.sweep, limits: Limits | None = None,
 ) -> FastAPI:
+    limits = limits or Limits.from_env()
     app = FastAPI(title="fly-points")
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     templates = Jinja2Templates(directory=HERE / "templates")
-    runner = JobRunner(search_fn, cache, stored_fn, sweep_fn)
+    budget = None
+    if limits.daily_searches is not None:
+        budget = DailyBudget(cache or Cache(), limits.daily_searches)
+    runner = JobRunner(search_fn, cache, stored_fn, sweep_fn, budget, limits.auth_message)
     saved = SavedSearches(Path(saved_path) if saved_path else paths.STATE_DIR / "saved_searches.json")
     app.state.runner, app.state.saved = runner, saved
 
     def render(request: Request, name: str, status: int = 200, **ctx) -> HTMLResponse:
         return templates.TemplateResponse(request, name, ctx, status_code=status)
+
+    def cap_errors(params: dict, kind: str = "search") -> list[str]:
+        cap = limits.max_sweep_searches if kind == "sweep" else limits.max_searches
+        if cap is not None and params["max_searches"] > cap:
+            return [f"Max searches: this server allows at most {cap} per {kind}."]
+        return []
 
     def results_context(job: Job, q: Mapping[str, str]) -> dict:
         idx_of = {id(o): i for i, o in enumerate(job.result.options)}
@@ -475,12 +560,14 @@ def create_app(
             request, "index.html",
             regions={k: ", ".join(v) for k, v in config.load_regions().items()},
             programs=list(config.load_programs().values()), saved=saved.list(), days=DAYS, cabins=list(Cabin),
-            banks=list(Bank), stored_age=engine.STORED_MAX_AGE_H,
+            banks=list(Bank), stored_age=engine.STORED_MAX_AGE_H, limits=limits,
+            not_live=[p.code for p in config.load_programs().values() if not p.live],
         )
 
     @app.post("/jobs", response_class=HTMLResponse)
     async def start_job(request: Request):
         params, errors = parse_params(form_to_raw(await request.form()))
+        errors = errors or cap_errors(params)
         if errors:
             return render(request, "_errors.html", status=422, errors=errors)
         return job_view(request, runner.submit(params))
@@ -495,6 +582,7 @@ def create_app(
     @app.post("/sweeps", response_class=HTMLResponse)
     async def start_sweep(request: Request):
         params, errors = parse_sweep_params(form_to_raw(await request.form()))
+        errors = errors or cap_errors(params, "sweep")
         if errors:
             return render(request, "_errors.html", status=422, errors=errors)
         return job_view(request, runner.submit(params, "sweep"))
@@ -559,6 +647,7 @@ def create_app(
         if item is None:
             return render(request, "_errors.html", status=404, errors=["Saved search not found."])
         params, errors = parse_params(item["params"])
+        errors = errors or cap_errors(params)
         if errors:
             return render(request, "_errors.html", status=422, errors=errors)
         return job_view(request, runner.submit(params))
@@ -573,6 +662,10 @@ def create_app(
 
 def serve(host: str = "127.0.0.1", port: int = 8765, reload: bool = False) -> None:
     import uvicorn
+
+    cache = Cache()
+    log.info("cache: purged %d expired entries", cache.purge_expired())
+    cache.close()
 
     if reload:
         # Restart on .py changes under src/flypoints; templates/CSS are re-read per request anyway.

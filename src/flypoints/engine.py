@@ -49,6 +49,7 @@ class SearchResult(BaseModel):
     options: list[RankedOption] = Field(default_factory=list)
     searches_planned: int = 0
     searches_run: int = 0
+    live_searches_run: int = 0  # of searches_run, the ones that called a live provider (not charts)
     searches_cached: int = 0
     searches_skipped: int = 0  # uncached live searches beyond query.max_searches
     errors: list[str] = Field(default_factory=list)
@@ -219,11 +220,13 @@ def _run_searches(
                     continue
                 offers += found
                 result.searches_run += 1
+                result.live_searches_run += not s.is_chart
             except AuthError:
                 abort.set()
                 raise
             except ProviderError as e:
                 result.searches_run += 1
+                result.live_searches_run += not s.is_chart
                 result.errors.append(f"{s.label}: {e}")
             on_done(s.label)
     finally:
