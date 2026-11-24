@@ -1,6 +1,6 @@
 # fly-points: deployment architecture (friends edition)
 
-Drafted 2026-11-24. Status: **deployed 2026-11-24** at `https://<VM IP with dashes>.sslip.io/`
+Drafted 2026-11-24. Status: **deployed 2026-11-24** at `https://flypoints.duckdns.org/` (DuckDNS A record, static VM IP; the old sslip.io name 301-redirects there)
 (user `friends`; the password is in `/root/flypoints-shared-password` on the VM, root-only). It
 covers how the web app is hosted for a handful of friends, the code changes made first, and the
 Iberia coverage finding that came up while checking the 2027-01-28..02-02 SJU→MAD search.
@@ -232,7 +232,7 @@ Run as root over the existing access (`ssh -i ~/.ssh/ig_agent_vm root@<VM_IP>`; 
    *Verify:* PointsYeah returns results, so the token works from a datacenter IP, and at least one
    cash fare attaches. fast-flights scrapes Google Flights and is untested from Hetzner's IP range.
    If cash comes back empty, set the SerpApi key (250 free searches/month) or run with cash off.
-6. **Hostname.** Either an A record on a domain Jean owns, or no-cost `<ip-with-dashes>.sslip.io`.
+6. **Hostname.** Either an A record on a domain Jean owns, or no-cost `<ip-with-dashes>.sslip.io`. Chosen: DuckDNS `flypoints.duckdns.org` (2026-11-24); Caddy serves it plus a redirect block for the old sslip.io name.
    Either works with Let's Encrypt; a real domain is easier to tell friends.
 7. **Caddy.** Install from Caddy's official apt repository. `/etc/caddy/Caddyfile`:
    ```
